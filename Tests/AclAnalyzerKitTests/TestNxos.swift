@@ -50,19 +50,19 @@ class TestNxos: XCTestCase {
         let acl = AccessList(sourceText: sample, deviceType: .nxos, delegate: nil, delegateWindow: nil)
         let socket1 = Socket(ipProtocol: 6, sourceIp: "131.252.209.17".ipv4address!, destinationIp: "10.24.31.3".ipv4address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .permit)
+        XCTAssert(result1.0 == .permit)
         let socket2 = Socket(ipProtocol: 17, sourceIp: "30.21.3.17".ipv4address!, destinationIp: "10.30.128.65".ipv4address!, sourcePort: 50, destinationPort: 49, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .permit)
+        XCTAssert(result2.0 == .permit)
         let socket3 = Socket(ipProtocol: 17, sourceIp: "30.21.3.17".ipv4address!, destinationIp: "10.30.128.65".ipv4address!, sourcePort: 50, destinationPort: 50, established: false, ipVersion: .IPv4)!
         let result3 = acl.analyze(socket: socket3)
-        XCTAssert(result3 == .deny)
+        XCTAssert(result3.0 == .deny)
         let socket4 = Socket(ipProtocol: 17, sourceIp: "20.22.1.7".ipv4address!, destinationIp: "10.30.128.69".ipv4address!, sourcePort: 15, destinationPort: 50, established: false, ipVersion: .IPv4)!
         let result4 = acl.analyze(socket: socket4)
-        XCTAssert(result4 == .permit)
+        XCTAssert(result4.0 == .permit)
         let socket5 = Socket(ipProtocol: 17, sourceIp: "20.22.1.7".ipv4address!, destinationIp: "10.30.128.69".ipv4address!, sourcePort: 9, destinationPort: 50, established: false, ipVersion: .IPv4)!
         let result5 = acl.analyze(socket: socket5)
-        XCTAssert(result5 == .deny)
+        XCTAssert(result5.0 == .deny)
     }
     
     func testNxosProtocolNumbered1() {
@@ -90,7 +90,7 @@ class TestNxos: XCTestCase {
         let acl = AccessList(sourceText: sample, deviceType: .nxos, delegate: nil, delegateWindow: nil)
         let socket1 = Socket(ipProtocol: 6, sourceIp: "131.252.209.17".ipv4address!, destinationIp: "10.24.31.3".ipv4address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .permit)
+        XCTAssert(result1.0 == .permit)
     }
     
     func testNxos3() {
@@ -106,31 +106,31 @@ class TestNxos: XCTestCase {
         let acl = AccessList(sourceText: sample, deviceType: .nxos, delegate: nil, delegateWindow: nil)
         let socket1 = Socket(ipProtocol: 6, sourceIp: "131.252.209.17".ipv4address!, destinationIp: "10.24.31.3".ipv4address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .permit)
+        XCTAssert(result1.0 == .permit)
         let socket1a = Socket(ipProtocol: 6, sourceIp: "131.252.209.17".ipv4address!, destinationIp: "10.24.31.3".ipv4address!, sourcePort: 33, destinationPort: 81, established: false, ipVersion: .IPv4)!
         let result1a = acl.analyze(socket: socket1a)
-        XCTAssert(result1a == .deny)
+        XCTAssert(result1a.0 == .deny)
         let socket2 = Socket(ipProtocol: 17, sourceIp: "30.21.3.17".ipv4address!, destinationIp: "10.30.128.65".ipv4address!, sourcePort: 50, destinationPort: 49, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .permit)
+        XCTAssert(result2.0 == .permit)
         let socket3 = Socket(ipProtocol: 17, sourceIp: "30.21.3.17".ipv4address!, destinationIp: "10.30.128.65".ipv4address!, sourcePort: 50, destinationPort: 50, established: false, ipVersion: .IPv4)!
         let result3 = acl.analyze(socket: socket3)
-        XCTAssert(result3 == .deny)
+        XCTAssert(result3.0 == .deny)
         let socket4 = Socket(ipProtocol: 17, sourceIp: "20.22.1.7".ipv4address!, destinationIp: "10.30.128.69".ipv4address!, sourcePort: 53, destinationPort: 50, established: false, ipVersion: .IPv4)!
         let result4 = acl.analyze(socket: socket4)
-        XCTAssert(result4 == .permit)
+        XCTAssert(result4.0 == .permit)
         let socket5 = Socket(ipProtocol: 17, sourceIp: "20.22.1.7".ipv4address!, destinationIp: "10.30.128.69".ipv4address!, sourcePort: 52, destinationPort: 50, established: false, ipVersion: .IPv4)!
         let result5 = acl.analyze(socket: socket5)
-        XCTAssert(result5 == .deny)
+        XCTAssert(result5.0 == .deny)
         let socket6 = Socket(ipProtocol: 6, sourceIp: "192.168.3.3".ipv4address!, destinationIp: "4.4.4.4".ipv4address!, sourcePort: 52, destinationPort: 50, established: false, ipVersion: .IPv4)!
         let result6 = acl.analyze(socket: socket6)
-        XCTAssert(result6 == .deny)
+        XCTAssert(result6.0 == .deny)
         let socket7 = Socket(ipProtocol: 6, sourceIp: "192.168.3.3".ipv4address!, destinationIp: "4.4.4.4".ipv4address!, sourcePort: 52, destinationPort: 50, established: true, ipVersion: .IPv4)!
         let result7 = acl.analyze(socket: socket7)
-        XCTAssert(result7 == .permit)
+        XCTAssert(result7.0 == .permit)
         let socket8 = Socket(ipProtocol: 6, sourceIp: "192.168.2.3".ipv4address!, destinationIp: "4.4.4.4".ipv4address!, sourcePort: 52, destinationPort: 50, established: true, ipVersion: .IPv4)!
         let result8 = acl.analyze(socket: socket8)
-        XCTAssert(result8 == .deny)
+        XCTAssert(result8.0 == .deny)
     }
     
     func testNxosCcierants1() {
@@ -144,11 +144,11 @@ class TestNxos: XCTestCase {
 
         let socket1 = Socket(ipProtocol: 6, sourceIp: "10.99.32.6".ipv4address!, destinationIp: "10.0.1.33".ipv4address!, sourcePort: 33, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .permit)
+        XCTAssert(result1.0 == .permit)
 
         let socket2 = Socket(ipProtocol: 6, sourceIp: "10.99.32.6".ipv4address!, destinationIp: "10.0.1.33".ipv4address!, sourcePort: 33, destinationPort: 23, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .deny)
+        XCTAssert(result2.0 == .deny)
     }
 
     
@@ -167,11 +167,11 @@ class TestNxos: XCTestCase {
 
         let socket1 = Socket(ipProtocol: 6, sourceIp: "10.0.0.132".ipv4address!, destinationIp: "10.0.0.3".ipv4address!, sourcePort: 22, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .permit)
+        XCTAssert(result1.0 == .permit)
 
         let socket2 = Socket(ipProtocol: 17, sourceIp: "10.0.0.132".ipv4address!, destinationIp: "10.0.0.3".ipv4address!, sourcePort: 22, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .deny)
+        XCTAssert(result2.0 == .deny)
 
     }
     
@@ -186,11 +186,11 @@ class TestNxos: XCTestCase {
 
         let socket1 = Socket(ipProtocol: 6, sourceIp: "1.1.1.1".ipv4address!, destinationIp: "11.0.0.2".ipv4address!, sourcePort: 22, destinationPort: 22, established: true, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .deny)
+        XCTAssert(result1.0 == .deny)
         
         let socket2 = Socket(ipProtocol: 6, sourceIp: "1.1.1.1".ipv4address!, destinationIp: "11.0.0.3".ipv4address!, sourcePort: 22, destinationPort: 22, established: true, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .permit)
+        XCTAssert(result2.0 == .permit)
     }
     
     func testNxos5() {
@@ -215,11 +215,11 @@ statistics per-entry
 
         let socket1 = Socket(ipProtocol: 17, sourceIp: "1.1.1.1".ipv4address!, destinationIp: "11.0.0.2".ipv4address!, sourcePort: 1812, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .permit)
+        XCTAssert(result1.0 == .permit)
 
         let socket2 = Socket(ipProtocol: 17, sourceIp: "1.1.1.1".ipv4address!, destinationIp: "11.0.0.2".ipv4address!, sourcePort: 1811, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .deny)
+        XCTAssert(result2.0 == .deny)
     }
     
     func testNxosObject1() {
@@ -240,11 +240,11 @@ ip access-list L3Port
         
         let socket1 = Socket(ipProtocol: 6, sourceIp: "11.0.37.45".ipv4address!, destinationIp: "12.0.0.2".ipv4address!, sourcePort: 80, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .permit)
+        XCTAssert(result1.0 == .permit)
         
         let socket2 = Socket(ipProtocol: 6, sourceIp: "11.1.0.0".ipv4address!, destinationIp: "12.0.0.2".ipv4address!, sourcePort: 80, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .deny)
+        XCTAssert(result2.0 == .deny)
 
     }
     
@@ -268,11 +268,11 @@ ip access-list L3Port
         
         let socket1 = Socket(ipProtocol: 6, sourceIp: "11.0.37.45".ipv4address!, destinationIp: "12.0.0.2".ipv4address!, sourcePort: 80, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .deny)
+        XCTAssert(result1.0 == .deny)
         
         let socket2 = Socket(ipProtocol: 6, sourceIp: "10.0.0.37".ipv4address!, destinationIp: "12.0.0.2".ipv4address!, sourcePort: 80, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .permit)
+        XCTAssert(result2.0 == .permit)
         
     }
 
@@ -294,11 +294,11 @@ ip access-list L3Port
         
         let socket1 = Socket(ipProtocol: 6, sourceIp: "11.0.37.45".ipv4address!, destinationIp: "1.1.1.101".ipv4address!, sourcePort: 80, destinationPort: 8999, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .deny)
+        XCTAssert(result1.0 == .deny)
         
         let socket2 = Socket(ipProtocol: 6, sourceIp: "11.0.37.45".ipv4address!, destinationIp: "1.1.1.101".ipv4address!, sourcePort: 80, destinationPort: 9000, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .deny)
+        XCTAssert(result2.0 == .deny)
 
     }
     func testNxosCcieMcgee1() {
@@ -318,15 +318,15 @@ ip access-list L3Port
         
         let socket1 = Socket(ipProtocol: 6, sourceIp: "10.0.0.37".ipv4address!, destinationIp: "11.0.0.2".ipv4address!, sourcePort: 80, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .permit)
+        XCTAssert(result1.0 == .permit)
 
         let socket2 = Socket(ipProtocol: 6, sourceIp: "10.0.0.37".ipv4address!, destinationIp: "11.0.0.2".ipv4address!, sourcePort: 7999, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .deny)
+        XCTAssert(result2.0 == .deny)
 
         let socket3 = Socket(ipProtocol: 6, sourceIp: "10.0.0.37".ipv4address!, destinationIp: "11.0.0.2".ipv4address!, sourcePort: 8000, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result3 = acl.analyze(socket: socket3)
-        XCTAssert(result3 == .permit)
+        XCTAssert(result3.0 == .permit)
 
     }
     
@@ -375,15 +375,15 @@ ip access-list  L3Port
         
         let socket1 = Socket(ipProtocol: 6, sourceIp: "10.0.0.37".ipv4address!, destinationIp: "11.0.0.2".ipv4address!, sourcePort: 80, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .permit)
+        XCTAssert(result1.0 == .permit)
         
         let socket2 = Socket(ipProtocol: 6, sourceIp: "10.0.0.37".ipv4address!, destinationIp: "11.0.0.2".ipv4address!, sourcePort: 7999, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .deny)
+        XCTAssert(result2.0 == .deny)
         
         let socket3 = Socket(ipProtocol: 6, sourceIp: "10.0.0.37".ipv4address!, destinationIp: "11.0.0.2".ipv4address!, sourcePort: 8000, destinationPort: 22, established: false, ipVersion: .IPv4)!
         let result3 = acl.analyze(socket: socket3)
-        XCTAssert(result3 == .permit)
+        XCTAssert(result3.0 == .permit)
     }
 
     func testNxosSiemhermans() {
@@ -402,35 +402,35 @@ IP access list ACL_NAME
         
         let socket1 = Socket(ipProtocol: 17, sourceIp: "10.0.3.33".ipv4address!, destinationIp: "1.1.1.1".ipv4address!, sourcePort: 10000, destinationPort: 1023, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .permit)
+        XCTAssert(result1.0 == .permit)
         
         let socket2 = Socket(ipProtocol: 6, sourceIp: "10.0.3.33".ipv4address!, destinationIp: "1.1.1.1".ipv4address!, sourcePort: 10000, destinationPort: 1023, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .deny)
+        XCTAssert(result2.0 == .deny)
 
         let socket3 = Socket(ipProtocol: 6, sourceIp: "11.0.0.1".ipv4address!, destinationIp: "14.0.3.255".ipv4address!, sourcePort: 10000, destinationPort: 1024, established: true, ipVersion: .IPv4)!
         let result3 = acl.analyze(socket: socket3)
-        XCTAssert(result3 == .permit)
+        XCTAssert(result3.0 == .permit)
 
         let socket4 = Socket(ipProtocol: 6, sourceIp: "11.0.0.1".ipv4address!, destinationIp: "14.0.3.255".ipv4address!, sourcePort: 10000, destinationPort: 1023, established: true, ipVersion: .IPv4)!
         let result4 = acl.analyze(socket: socket4)
-        XCTAssert(result4 == .deny)
+        XCTAssert(result4.0 == .deny)
 
         let socket5 = Socket(ipProtocol: 6, sourceIp: "12.0.1.37".ipv4address!, destinationIp: "10.255.255.255".ipv4address!, sourcePort: 1024, destinationPort: 6629, established: true, ipVersion: .IPv4)!
         let result5 = acl.analyze(socket: socket5)
-        XCTAssert(result5 == .permit)
+        XCTAssert(result5.0 == .permit)
 
         let socket6 = Socket(ipProtocol: 6, sourceIp: "12.0.1.37".ipv4address!, destinationIp: "11.0.0.0".ipv4address!, sourcePort: 1024, destinationPort: 6629, established: true, ipVersion: .IPv4)!
         let result6 = acl.analyze(socket: socket6)
-        XCTAssert(result6 == .deny)
+        XCTAssert(result6.0 == .deny)
 
         let socket7 = Socket(ipProtocol: 6, sourceIp: "160.0.2.191".ipv4address!, destinationIp: "10.254.128.255".ipv4address!, sourcePort: 1024, destinationPort: 9389, established: false, ipVersion: .IPv4)!
         let result7 = acl.analyze(socket: socket7)
-        XCTAssert(result7 == .permit)
+        XCTAssert(result7.0 == .permit)
 
         let socket8 = Socket(ipProtocol: 6, sourceIp: "160.0.2.191".ipv4address!, destinationIp: "10.254.128.255".ipv4address!, sourcePort: 1024, destinationPort: 9389, established: true, ipVersion: .IPv4)!
         let result8 = acl.analyze(socket: socket8)
-        XCTAssert(result8 == .permit)
+        XCTAssert(result8.0 == .permit)
 
     }
     
@@ -509,47 +509,47 @@ IP access list ACL_NAME
         
         let socket1 = Socket(ipProtocol: 6, sourceIp: "10.99.32.6".ipv4address!, destinationIp: "10.0.1.33".ipv4address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
-        XCTAssert(result1 == .permit)
+        XCTAssert(result1.0 == .permit)
         
         let socket2 = Socket(ipProtocol: 6, sourceIp: "192.168.7.33".ipv4address!, destinationIp: "10.0.1.33".ipv4address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv4)!
         let result2 = acl.analyze(socket: socket2)
-        XCTAssert(result2 == .permit)
+        XCTAssert(result2.0 == .permit)
         
         let socket3 = Socket(ipProtocol: 6, sourceIp: "192.168.8.33".ipv4address!, destinationIp: "10.0.1.33".ipv4address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv4)!
         let result3 = acl.analyze(socket: socket3)
-        XCTAssert(result3 == .permit)
+        XCTAssert(result3.0 == .permit)
         
         let socket4 = Socket(ipProtocol: 6, sourceIp: "192.168.8.33".ipv4address!, destinationIp: "10.0.1.33".ipv4address!, sourcePort: 33, destinationPort: 81, established: false, ipVersion: .IPv4)!
         let result4 = acl.analyze(socket: socket4)
-        XCTAssert(result4 == .deny)
+        XCTAssert(result4.0 == .deny)
 
         let socket5 = Socket(ipProtocol: 6, sourceIp: "192.168.8.33".ipv4address!, destinationIp: "10.0.1.33".ipv4address!, sourcePort: 33, destinationPort: 31, established: false, ipVersion: .IPv4)!
         let result5 = acl.analyze(socket: socket5)
-        XCTAssert(result5 == .permit)
+        XCTAssert(result5.0 == .permit)
 
         let socket6 = Socket(ipProtocol: 17, sourceIp: "192.168.10.33".ipv4address!, destinationIp: "192.168.11.194".ipv4address!, sourcePort: 33, destinationPort: 76, established: false, ipVersion: .IPv4)!
         let result6 = acl.analyze(socket: socket6)
-        XCTAssert(result6 == .permit)
+        XCTAssert(result6.0 == .permit)
 
         let socket7 = Socket(ipProtocol: 17, sourceIp: "192.168.10.33".ipv4address!, destinationIp: "192.168.11.194".ipv4address!, sourcePort: 33, destinationPort: 77, established: false, ipVersion: .IPv4)!
         let result7 = acl.analyze(socket: socket7)
-        XCTAssert(result7 == .deny)
+        XCTAssert(result7.0 == .deny)
 
         let socket8 = Socket(ipProtocol: 6, sourceIp: "192.168.12.33".ipv4address!, destinationIp: "192.168.13.194".ipv4address!, sourcePort: 33, destinationPort: 29, established: true, ipVersion: .IPv4)!
         let result8 = acl.analyze(socket: socket8)
-        XCTAssert(result8 == .permit)
+        XCTAssert(result8.0 == .permit)
 
         let socket9 = Socket(ipProtocol: 6, sourceIp: "192.168.12.33".ipv4address!, destinationIp: "192.168.13.194".ipv4address!, sourcePort: 33, destinationPort: 30, established: true, ipVersion: .IPv4)!
         let result9 = acl.analyze(socket: socket9)
-        XCTAssert(result9 == .deny)
+        XCTAssert(result9.0 == .deny)
 
         let socket10 = Socket(ipProtocol: 6, sourceIp: "192.168.12.33".ipv4address!, destinationIp: "192.168.13.194".ipv4address!, sourcePort: 33, destinationPort: 65501, established: true, ipVersion: .IPv4)!
         let result10 = acl.analyze(socket: socket10)
-        XCTAssert(result10 == .permit)
+        XCTAssert(result10.0 == .permit)
 
         let socket11 = Socket(ipProtocol: 6, sourceIp: "192.168.12.33".ipv4address!, destinationIp: "192.168.13.194".ipv4address!, sourcePort: 33, destinationPort: 65500, established: true, ipVersion: .IPv4)!
         let result11 = acl.analyze(socket: socket11)
-        XCTAssert(result11 == .deny)
+        XCTAssert(result11.0 == .deny)
 
     }
 
