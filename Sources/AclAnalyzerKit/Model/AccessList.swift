@@ -9,7 +9,7 @@
 import Foundation
 import Network
 
-class AccessList {
+public class AccessList {
     
     let MAXIP = UInt(UInt32.max)
     let MAXPORT = UInt(UInt16.max)
@@ -1008,8 +1008,42 @@ class AccessList {
             timer.invalidate()
         }
     }
-    
-    public func analyze(socket: Socket, errorDelegate: ErrorDelegate? = nil, delegateWindow: DelegateWindow? = nil) -> AclAction {
+    /*public func analyze(socket: Socket) -> AclAction {
+        let (action, _) = analyze(socket: socket)
+        return action
+    }*/
+    public func analyze(socket: Socket) -> (AclAction, String) {
+        var aclAction: AclAction? = nil
+        var messages = ""
+        for accessControlEntry in accessControlEntries {
+            let aceAction = accessControlEntry.analyze(socket: socket)
+            switch aceAction {
+            case .neither:
+                continue
+            case .permit, .deny:
+                if aclAction == nil {
+                    // first match in acl
+                    aclAction = aceAction
+                    messages.append("FIRST MATCH \(accessControlEntry.line)\n")
+                    //errorDelegate?.report(severity: .result, message: "FIRST MATCH \(accessControlEntry.line)", line: accessControlEntry.linenum, delegateWindow: delegateWindow)
+                } else {
+                    // later match in acl
+                    messages.append("ALSO MATCH \(accessControlEntry.line)\n")
+                    //errorDelegate?.report(severity: .result, message: "ALSO MATCH \(accessControlEntry.line)", line: accessControlEntry.linenum, delegateWindow: delegateWindow)
+                }
+            }
+        }
+        guard let finalAclAction = aclAction else {
+            // no match found, implicit deny
+            messages.append("No Match Found, implicit \(AclAction.deny)\n")
+            //delegate?.report(severity: .result, message: "No Match Found, implicit \(AclAction.deny)", delegateWindow: delegateWindow)
+            return (.deny,messages)
+        }
+        return (finalAclAction,messages)
+    }
+
+    //func analyze(socket: Socket, errorDelegate: ErrorDelegate? = nil, delegateWindow: DelegateWindow? = nil) -> AclAction {
+    /*func analyze(socket: Socket, errorDelegate: ErrorDelegate?, delegateWindow: DelegateWindow?) -> AclAction {
         var aclAction: AclAction? = nil
         for accessControlEntry in accessControlEntries {
             let aceAction = accessControlEntry.analyze(socket: socket)
@@ -1033,7 +1067,7 @@ class AccessList {
             return .deny
         }
         return finalAclAction
-    }
+    }*/
 }
 extension AccessList: AclDelegate {
     func getHostname(_ hostname: String) -> UInt128? {

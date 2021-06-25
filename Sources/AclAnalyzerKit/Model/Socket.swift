@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct Socket {
+public struct Socket {
     let ipVersion: IpVersion
     let ipProtocol: UInt // 0 means ip
     let sourceIp: UInt128
@@ -73,7 +73,7 @@ struct Socket {
     }
 }
 extension Socket: CustomStringConvertible {
-    var description: String {
+    public var description: String {
         let sourceIpString, destIpString: String
         if self.sourceIp > UInt128.MAXIPV4 || self.destinationIp > UInt128.MAXIPV4 {
             sourceIpString = self.sourceIp.ipv6
