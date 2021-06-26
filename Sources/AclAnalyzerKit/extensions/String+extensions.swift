@@ -28,7 +28,8 @@ extension String {
         return ipv6.uint128
     }
 
-    func tcpPort(deviceType: DeviceType, delegate: ErrorDelegate?, delegateWindow: DelegateWindow?) -> UInt? {
+    //func tcpPort(deviceType: DeviceType, delegate: ErrorDelegate?, delegateWindow: DelegateWindow?) -> UInt? {
+    func tcpPort(deviceType: DeviceType) -> UInt? {
         switch (deviceType,self) {
         case (.arista,"acap"),(.aristav6,"acap"):
             return 674

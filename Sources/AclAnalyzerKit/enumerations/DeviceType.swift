@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum DeviceType: String, CaseIterable, Hashable {
+public enum DeviceType: String, CaseIterable, Hashable {
     case ios
     case iosv6
     case asa

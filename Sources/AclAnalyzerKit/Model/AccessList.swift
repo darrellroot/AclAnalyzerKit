@@ -18,12 +18,13 @@ public class AccessList {
     var accessControlEntries: [AccessControlEntry] = []
     var deviceType: DeviceType
     var aclNames: Set<String> = []  // names of the access-lists
-    var delegate: ErrorDelegate?
+    //var delegate: ErrorDelegate?
     var objectGroupNetworks = [String:ObjectGroupNetwork]()
     var objectGroupProtocols = [String:ObjectGroupProtocol]()
     var objectGroupServices = [String:ObjectGroupService]()
     var hostnames = [String:UInt128]() // ASA example: "name 2.2.2.203 trust18"
     var warnings: Set<String> = [] // summary warnings each to be printed out once at end of processing
+    var aclErrors: [AclError] = [] // Errors generated during acl creation, in ACL line # order
     
     var count: Int {
         return accessControlEntries.count
@@ -40,9 +41,10 @@ public class AccessList {
         case accessControlEntry  // default
     }
     
-    init(sourceText: String, deviceType: DeviceType, delegate: ErrorDelegate?, delegateWindow: DelegateWindow?) {
+    //public init(sourceText: String, deviceType: DeviceType, delegate: ErrorDelegate?, delegateWindow: DelegateWindow?) {
+    public init(sourceText: String, deviceType: DeviceType) {
         self.sourceText = sourceText.lowercased()
-        self.delegate = delegate
+        //self.delegate = delegate
         self.deviceType = deviceType
         var linenum = 0
         var lastSequenceSeen: UInt = 0  // used for making sure sequence numbers increase in the acl, each time we change configuration mode we reset this
@@ -54,10 +56,12 @@ public class AccessList {
             
             linenum = linenum + 1
             
-            func reportError() {
-                delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                delegate?.report(severity: .error, message: "line invalid, not included in analysis", line: linenum, delegateWindow: delegateWindow)
-            }
+            /*func reportError() {
+                let aclError = AclError(linenum: linenum, line: line, message: "line invalid, not included in analysis")
+                self.aclErrors.append(aclError)
+                //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                //delegate?.report(severity: .error, message: "line invalid, not included in analysis", line: linenum, delegateWindow: delegateWindow)
+            }*/
 
             if line.isEmpty {
                 continue lineLoop
@@ -66,8 +70,10 @@ public class AccessList {
             let words = line.split{ $0.isWhitespace }.map{ String($0)}
             
             if self.deviceType == .ios && words[safe: 0] == "object-group" && words[safe: 1] == "service" {
-                delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                delegate?.report(severity: .error, message: "ACL Analyzer does not support service object-groups for IOSXE. ACL ANALYSIS WILL NOT BE COMPLETE. Email acl sample to feedback@networkmom.net if this is a major problem", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "ACL Analyzer does not support service object-groups for IOSXE. ACL ANALYSIS WILL NOT BE COMPLETE. Email acl sample to feedback@networkmom.net if this is a major problem")
+                self.aclErrors.append(aclError)
+                //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                //delegate?.report(severity: .error, message: "ACL Analyzer does not support service object-groups for IOSXE. ACL ANALYSIS WILL NOT BE COMPLETE. Email acl sample to feedback@networkmom.net if this is a major problem", line: linenum, delegateWindow: delegateWindow)
                 continue lineLoop
             }
             
@@ -79,8 +85,10 @@ public class AccessList {
                     lastSequenceSeen = 0
                     objectName = objectNameTemp
                 } else {
-                    reportError()
-                    delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
+                    //reportError()
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Duplicate object-group name \(objectNameTemp)")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
                     configurationMode = .accessControlEntry
                     lastSequenceSeen = 0
                     objectName = nil
@@ -95,8 +103,10 @@ public class AccessList {
                     lastSequenceSeen = 0
                     objectName = objectNameTemp
                 } else {
-                    reportError()
-                    delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
+                    //reportError()
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Duplicate object-group name \(objectNameTemp)")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
                     configurationMode = .accessControlEntry
                     lastSequenceSeen = 0
                     objectName = nil
@@ -111,8 +121,11 @@ public class AccessList {
                     lastSequenceSeen = 0
                     objectName = objectNameTemp
                 } else {
-                    reportError()
-                    delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
+                    //reportError()
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Duplicate object-group name \(objectNameTemp)")
+                    self.aclErrors.append(aclError)
+
+                    //delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
                     configurationMode = .accessControlEntry
                     lastSequenceSeen = 0
                     objectName = nil
@@ -128,7 +141,10 @@ public class AccessList {
                     objectName = objectNameTemp
                     continue lineLoop
                 } else {
-                    delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Duplicate object-group name \(objectNameTemp)")
+                    self.aclErrors.append(aclError)
+
                     configurationMode = .accessControlEntry
                     lastSequenceSeen = 0
                     objectName = nil
