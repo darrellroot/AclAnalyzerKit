@@ -9,7 +9,29 @@
 import XCTest
 @testable import AclAnalyzerKit
 
-class TestIosXR: XCTestCase {
+class TestIosXR: XCTestCase, AclDelegate {
+    
+    //Faking acl delegate stuff to allow testing
+    func report(aclError: AclError) {
+        return
+    }
+    func getObjectGroupNetwork(_ group: String) -> ObjectGroupNetwork? {
+        return nil
+    }
+    func getObjectGroupService(_ group: String) -> ObjectGroupService? {
+        return nil
+    }
+    func getObjectGroupProtocol(_ group: String) -> ObjectGroupProtocol? {
+        return nil
+    }
+    func getHostname(_ hostname: String) -> UInt128? {
+        return nil
+    }
+    func foundName(_ name: String) {
+        return
+    }
+    // end faking acl delegate stuff to allow testing
+    
 
     override func setUp() {
         // Put setup code here. This method is called before the invocation of each test method in the class.
@@ -26,7 +48,7 @@ class TestIosXR: XCTestCase {
             20 permit 172.16.0.0 0.0.255.255
             30 permit 192.168.34.0 0.0.0.255
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         let socket1 = Socket(ipProtocol: 6, sourceIp: "172.16.3.3".ipv4address!, destinationIp: "10.24.31.3".ipv4address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
         XCTAssert(result1.0 == .permit)
@@ -37,7 +59,7 @@ class TestIosXR: XCTestCase {
     }
     func testIosXrProtocolNumbered1() {
         let line1 = "101 permit 6 131.252.209.18/32 host 2.2.2.2"
-        let ace1 = AccessControlEntry(line: line1, deviceType: .iosxr, linenum: 1, errorDelegate: nil, delegateWindow: nil)
+        let ace1 = AccessControlEntry(line: line1, deviceType: .iosxr, linenum: 1, aclDelegate: self)
         XCTAssert(ace1 != nil)
     }
 
@@ -53,7 +75,7 @@ ipv4 access-list acl_1
 80 permit tcp host 10.3.3.3 host 10.1.2.2
 """
 
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         
         XCTAssert(acl.accessControlEntries.count == 7)
         
@@ -100,7 +122,7 @@ ipv4 access-list real
 121 permit udp any net-group real eq 636
 200 permit ipv4 any any
 """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         let socket1 = Socket(ipProtocol: 6, sourceIp: "10.3.3.3".ipv4address!, destinationIp: "100.1.1.1".ipv4address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
         XCTAssert(result1.0 == .permit)
@@ -115,7 +137,7 @@ ipv4 access-list acl_5
  10 permit ipv4 host 10.0.0.1 any
  20 permit ipv4 host 10.0.0.2 any
 """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         XCTAssert(acl.accessControlEntries.count == 4)
         let socket1 = Socket(ipProtocol: 3, sourceIp: "10.4.4.2".ipv4address!, destinationIp: "100.1.1.1".ipv4address!, sourcePort: nil, destinationPort: nil, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
@@ -134,7 +156,7 @@ ipv4 access-list acl_5
     permit ipv4 host 10.0.0.1 any
     permit ipv4 host 10.0.0.2 any
 """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         XCTAssert(acl.accessControlEntries.count == 4)
         let socket1 = Socket(ipProtocol: 3, sourceIp: "10.4.4.2".ipv4address!, destinationIp: "100.1.1.1".ipv4address!, sourcePort: nil, destinationPort: nil, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
@@ -150,7 +172,7 @@ ipv4 access-list acl_5
 ipv4 access-list acl_5
     30 permit ipv4 30.1.1.0/24 any
 """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         XCTAssert(acl.accessControlEntries.count == 1)
         let socket1 = Socket(ipProtocol: 3, sourceIp: "30.1.1.255".ipv4address!, destinationIp: "100.1.1.1".ipv4address!, sourcePort: nil, destinationPort: nil, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
@@ -176,7 +198,7 @@ ipv4 access-list ACL-INFRASTRUCTURE-IN
   !
   60 deny ipv4 any any
 """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         XCTAssert(acl.accessControlEntries.count == 6)
         let socket1 = Socket(ipProtocol: 6, sourceIp: "1.1.1.1".ipv4address!, destinationIp: "1.1.1.2".ipv4address!, sourcePort: 44, destinationPort: 179, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
@@ -220,7 +242,7 @@ ipv4 access-list ACL-INFRASTRUCTURE-IN
     }
     func testIosXrIndented() {
         let line = "  10 permit tcp 192.168.36.0 0.0.0.255 any eq 80"
-        let ace = AccessControlEntry(line: line, deviceType: .iosxr, linenum: 7, errorDelegate: nil, delegateWindow: nil)
+        let ace = AccessControlEntry(line: line, deviceType: .iosxr, linenum: 7, aclDelegate: self)
         XCTAssert(ace?.destPort[0].minPort == 80)
         guard let sourceip = "192.168.36.0".ipv4address else {
             XCTAssert(false)
@@ -231,7 +253,7 @@ ipv4 access-list ACL-INFRASTRUCTURE-IN
     
     func testIosXrLineNumbered() {
         let line = "10 permit tcp 192.168.36.0 0.0.0.255 any eq 80"
-        let ace = AccessControlEntry(line: line, deviceType: .iosxr, linenum: 7, errorDelegate: nil, delegateWindow: nil)
+        let ace = AccessControlEntry(line: line, deviceType: .iosxr, linenum: 7, aclDelegate: self)
         XCTAssert(ace?.destPort[0].minPort == 80)
         guard let sourceip = "192.168.36.0".ipv4address else {
             XCTAssert(false)
@@ -245,7 +267,7 @@ ipv4 access-list ACL-INFRASTRUCTURE-IN
         ipv4 access-list acl_hw_1
           10 permit 192.168.36.0/24
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         XCTAssert(acl.count == 1)
         do {
             let socket = Socket(ipProtocol: 3, sourceIp: "192.168.36.0".ipv4address!, destinationIp: "202.202.202.20".ipv4address!, sourcePort: nil, destinationPort: nil, established: false, ipVersion: .IPv4)!
@@ -275,7 +297,7 @@ ipv4 access-list acl_hw_1
   20 permit ip 172.16.3.0 0.0.255.255 any
   30 deny tcp any any
 """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         XCTAssert(acl.count == 3)
     }
     
@@ -286,7 +308,7 @@ ipv4 access-list acl_hw_1
    permit ip 172.16.3.0 0.0.255.255 any
    deny tcp any any
 """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         XCTAssert(acl.count == 3)
     }
 
@@ -295,7 +317,7 @@ ipv4 access-list acl_hw_1
 ipv4 access-list violation-log
  10 permit ipv4 10.0.0.0 0.255.255.255 host 202.202.202.20 log-input
 """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         XCTAssert(acl.accessControlEntries.count == 1)
         let socket1 = Socket(ipProtocol: 3, sourceIp: "10.3.3.3".ipv4address!, destinationIp: "202.202.202.20".ipv4address!, sourcePort: nil, destinationPort: nil, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
@@ -312,7 +334,7 @@ ipv4 access-list acl_5
 30 deny tcp any any gt 5000
 40 permit ip any any
 """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         XCTAssert(acl.accessControlEntries.count == 2)
         let socket1 = Socket(ipProtocol: 6, sourceIp: "30.1.1.255".ipv4address!, destinationIp: "100.1.1.1".ipv4address!, sourcePort: 33, destinationPort: 5000, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
@@ -329,7 +351,7 @@ ipv4 access-list acl_5
 ipv4 access-list CounterExample
  10 permit ipv4 30.1.1.0/24 any counter TestCounter
 """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         XCTAssert(acl.accessControlEntries.count == 1)
         let socket1 = Socket(ipProtocol: 3, sourceIp: "30.1.1.255".ipv4address!, destinationIp: "100.1.1.1".ipv4address!, sourcePort: nil, destinationPort: nil, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
@@ -354,7 +376,7 @@ ipv4 access-list CounterExample
         10 permit tcp net-group aaa net-group bbb eq 80
         """
         
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         let socket1 = Socket(ipProtocol: 6, sourceIp: "1.1.1.1".ipv4address!, destinationIp: "4.0.0.4".ipv4address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
         XCTAssert(result1.0 == .permit)
@@ -373,7 +395,7 @@ ipv4 access-list CounterExample
         ipv4 access-list testing
         10 permit tcp host 1.1.1.1 port-group web 2.2.2.2 0.0.0.0 port-group web log-input
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         let socket1 = Socket(ipProtocol: 6, sourceIp: "1.1.1.1".ipv4address!, destinationIp: "2.2.2.2".ipv4address!, sourcePort: 80, destinationPort: 443, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
         XCTAssert(result1.0 == .permit)
@@ -398,7 +420,7 @@ ipv4 access-list CounterExample
         ipv4 access-list testing
         10 permit tcp host 1.1.1.1 2.2.2.2 0.0.0.0 port-group management log-input
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         let socket1 = Socket(ipProtocol: 6, sourceIp: "1.1.1.1".ipv4address!, destinationIp: "2.2.2.2".ipv4address!, sourcePort: 80, destinationPort: 80, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
         XCTAssert(result1.0 == .permit)
@@ -423,7 +445,7 @@ ipv4 access-list acl1
 10 permit tcp  net-group  acl1  host 10.10.10.1  eq 2200
 20 permit tcp 10.10.10.3/32  host 1.1.1.2   eq  2000
 """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         let socket1 = Socket(ipProtocol: 6, sourceIp: "10.10.10.3".ipv4address!, destinationIp: "1.1.1.2".ipv4address!, sourcePort: 33, destinationPort: 2000, established: false, ipVersion: .IPv4)!
         let result1 = acl.analyze(socket: socket1)
         XCTAssert(result1.0 == .permit)
@@ -474,7 +496,7 @@ ipv4 access-list acl_1
 80 permit tcp 10.3.3.0/24 10.1.2.0/26 eq 80
 """
         
-        let acl = AccessList(sourceText: sample, deviceType: .iosxr, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxr)
         
         XCTAssert(acl.accessControlEntries.count == 7)
         

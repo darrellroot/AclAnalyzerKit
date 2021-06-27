@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AclError {
+struct AclError: Error {
     let linenum: Int
     let line: String
     let severity: Severity

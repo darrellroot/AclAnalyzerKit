@@ -225,7 +225,7 @@ access-list 101 permit gre 165.19.40.137 0.0.3.255 14.34.51.137 255.255.255.255
 access-list 101 deny 6 219.31.130.17 0.0.0.0 185.233.144.44 0.127.255.255
 access-list 101 permit udp 134.249.56.151 0.0.0.15 eq 42648 118.127.210.83 1.255.255.255 lt 42170
 """
-            let acl = AccessList(sourceText: sample, deviceType: .ios, delegate: nil, delegateWindow: nil)
+            let acl = AccessList(sourceText: sample, deviceType: .ios)
             debugPrint(acl.accessControlEntries.count)
 
         }// self.measure
@@ -635,7 +635,7 @@ access-list 101 deny 6 68.3.158.53 127.255.255.255 134.198.162.58 0.0.0.255
 access-list 101 deny gre 243.204.113.51 0.255.255.255 131.29.39.247 3.255.255.255
 access-list 101 deny 6 189.156.162.103 3.255.255.255 58.0.99.159 0.0.0.31
 """
-            let acl = AccessList(sourceText: sample, deviceType: .ios, delegate: nil, delegateWindow: nil)
+            let acl = AccessList(sourceText: sample, deviceType: .ios)
             debugPrint(acl.accessControlEntries.count)
         }// self.measure
     }//func

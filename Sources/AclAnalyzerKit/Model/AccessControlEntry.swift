@@ -280,33 +280,33 @@ struct AccessControlEntry {
     }
     //MARK: GLOBAL INIT
     
-    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, errorDelegate: ErrorDelegate?, delegateWindow: DelegateWindow?) {
+    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate) {
         
         switch deviceType {
         case .ios:
-            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, errorDelegate: errorDelegate, delegateWindow: delegateWindow, ios: true)
+            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, ios: true)
         case .iosv6:
-            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, errorDelegate: errorDelegate, delegateWindow: delegateWindow, iosv6: true)
+            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, iosv6: true)
         case .asa:
-            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, errorDelegate: errorDelegate, delegateWindow: delegateWindow, asa: true)
+            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, asa: true)
         case .nxos:
-            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, errorDelegate: errorDelegate, delegateWindow: delegateWindow, nxos: true)
+            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, nxos: true)
         case .nxosv6:
-            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, errorDelegate: errorDelegate, delegateWindow: delegateWindow, nxosv6: true)
+            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, nxosv6: true)
         case .iosxr:
-            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, errorDelegate: errorDelegate, delegateWindow: delegateWindow, iosxr: true)
+            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, iosxr: true)
         case .iosxrv6:
-            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, errorDelegate: errorDelegate, delegateWindow: delegateWindow, iosxrv6: true)
+            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, iosxrv6: true)
         case .arista:
-            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, errorDelegate: errorDelegate, delegateWindow: delegateWindow, arista: true)
+            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, arista: true)
         case .aristav6:
-            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, errorDelegate: errorDelegate, delegateWindow: delegateWindow, aristav6: true)
+            self.init(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: aclDelegate, aristav6: true)
 
         }
     }
     
     //MARK: IOS IPv6
-    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, errorDelegate: ErrorDelegate?, delegateWindow: DelegateWindow?, iosv6: Bool) {
+    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, iosv6: Bool) {
         var tempSourcePortOperator: PortOperator?
         var tempFirstSourcePort: UInt?
         var tempDestPortOperator: PortOperator?
@@ -317,13 +317,15 @@ struct AccessControlEntry {
         self.linenum = linenum
         
         func reportError() {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "invalid after \(linePosition)", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "invalid after \(linePosition)")
+            aclDelegate?.report(aclError: aclError)
         }
         
         func reportUnsupported(keyword: String) {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.")
+            aclDelegate?.report(aclError: aclError)
+            //errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+            //errorDelegate?.report(severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.", line: linenum, delegateWindow: delegateWindow)
         }
         
         func analyzeFirstSourcePort(firstPort: UInt) -> Bool { // true == success
@@ -461,14 +463,18 @@ struct AccessControlEntry {
                 }
             }
             
-            if !sourceAllBitAligned || !destAllBitAligned {
+            /*if !sourceAllBitAligned || !destAllBitAligned {
                 errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            }
+            }*/
             if !sourceAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Source IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Source IP not on netmask or bit boundary")
+                aclDelegate?.report(aclError: aclError)
+                //errorDelegate?.report(severity: .warning, message: "Source IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
             }
             if !destAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Destination IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Destination IP not on netmask or bit boundary")
+                aclDelegate?.report(aclError: aclError)
+                //errorDelegate?.report(severity: .warning, message: "Destination IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
             }
             return true
         }//ValidateIos
@@ -592,12 +598,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .ios), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .ios), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -625,8 +631,8 @@ struct AccessControlEntry {
                 case .name(let name):
                     var possiblePort: UInt?
                     if self.ipProtocols.count > 1 {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .warning, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.")
+                        aclDelegate?.report(aclError: aclError)
                     }
                     guard let ipProtocol = self.ipProtocols.first else {
                         reportError()
@@ -634,11 +640,11 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        if let tempPort = name.tcpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = name.tcpPort(deviceType: .ios) {
                             possiblePort = tempPort
                         }
                     case 17:
-                        if let tempPort = name.udpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = name.udpPort(deviceType: .ios) {
                             possiblePort = tempPort
                         }
                     default:
@@ -705,8 +711,8 @@ struct AccessControlEntry {
                     linePosition = .end
                 case .established:
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meaning when IP protocol is tcp")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -733,12 +739,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .ios), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .ios), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -766,8 +772,8 @@ struct AccessControlEntry {
                 case .name(let secondPortString):
                     var possiblePort: UInt?
                     if self.ipProtocols.count > 1 {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .warning, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.")
+                        aclDelegate?.report(aclError: aclError)
                     }
                     guard let ipProtocol = self.ipProtocols.first else {
                         reportError()
@@ -775,11 +781,11 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        if let tempPort = secondPortString.tcpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = secondPortString.tcpPort(deviceType: .ios) {
                             possiblePort = tempPort
                         }
                     case 17:
-                        if let tempPort = secondPortString.udpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = secondPortString.udpPort(deviceType: .ios) {
                             possiblePort = tempPort
                         }
                     default:
@@ -813,13 +819,13 @@ struct AccessControlEntry {
                     linePosition = .end
                 case .established:
                     guard self.established == false else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Error: found established keyword twice", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Found established keyword twice")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meanting when IP protocol is tcp")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -846,13 +852,13 @@ struct AccessControlEntry {
                     linePosition = .end
                 case .established:
                     guard self.established == false else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Error: found established keyword twice", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Found established keyword twice")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meanting when IP protocol is tcp")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -899,14 +905,14 @@ struct AccessControlEntry {
             }
         }//wordLoop for word in words
         if validateIosV6() == false {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "Unable to create valid ACE based on line", delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to create valid ACE based on line")
+            aclDelegate?.report(aclError: aclError)
             return nil
         }
     }// init iosv6
 
     //MARK: Arista IPV4 INIT
-    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, errorDelegate: ErrorDelegate?, delegateWindow: DelegateWindow?, arista: Bool) {
+    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, arista: Bool) {
         
         var tempSourcePortOperator: PortOperator?
         var tempFirstSourcePort: UInt?
@@ -920,13 +926,15 @@ struct AccessControlEntry {
         self.linenum = linenum
         
         func reportError() {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "invalid after \(linePosition)", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "invalid after \(linePosition)")
+            aclDelegate?.report(aclError: aclError)
         }
         
         func reportUnsupported(keyword: String) {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.", line: linenum, delegateWindow: delegateWindow)
+            func reportError() {
+                let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.")
+                aclDelegate?.report(aclError: aclError)
+            }
         }
 
         func validateArista() -> Bool { // true -> ACE validated
@@ -1008,14 +1016,13 @@ struct AccessControlEntry {
                 }
             }
 
-            if !sourceAllBitAligned || !destAllBitAligned {
-                errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            }
             if !sourceAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Source IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Source IP not on netmask or bit boundary")
+                aclDelegate?.report(aclError: aclError)
             }
             if !destAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Destination IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Destination IP not on netmask or bit boundary")
+                aclDelegate?.report(aclError: aclError)
             }
             return true
         }
@@ -1219,12 +1226,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .arista), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .arista), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -1258,12 +1265,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .arista), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .arista), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -1305,13 +1312,13 @@ struct AccessControlEntry {
                     let secondSourcePort: UInt
                     switch ipProtocol {
                     case 6:
-                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .arista) else {
                             reportError()
                             return nil
                         }
                         secondSourcePort = secondPortOptional
                     case 17:
-                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .arista) else {
                             reportError()
                             return nil
                         }
@@ -1417,12 +1424,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .arista), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .arista), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -1451,12 +1458,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .arista), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .arista), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -1504,13 +1511,13 @@ struct AccessControlEntry {
                     let secondDestPort: UInt
                     switch ipProtocol {
                     case 6:
-                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .arista) else {
                             reportError()
                             return nil
                         }
                         secondDestPort = secondPortOptional
                     case 17:
-                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .arista, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .arista) else {
                             reportError()
                             return nil
                         }
@@ -1581,14 +1588,14 @@ struct AccessControlEntry {
             }
         }
         if validateArista() == false {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "Unable to create valid ACE based on line", delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to create valid ACE based on line")
+            aclDelegate?.report(aclError: aclError)
             return nil
         }
     }
 
     //MARK: Arista IPV6 INIT
-    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, errorDelegate: ErrorDelegate?, delegateWindow: DelegateWindow?, aristav6: Bool) {
+    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, aristav6: Bool) {
         
         var tempSourcePortOperator: PortOperator?
         var tempFirstSourcePort: UInt?
@@ -1602,13 +1609,13 @@ struct AccessControlEntry {
         self.linenum = linenum
         
         func reportError() {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "invalid after \(linePosition)", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "invalid after \(linePosition)")
+            aclDelegate?.report(aclError: aclError)
         }
         
         func reportUnsupported(keyword: String) {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.")
+            aclDelegate?.report(aclError: aclError)
         }
 
         func validateArista() -> Bool { // true -> ACE validated
@@ -1690,14 +1697,13 @@ struct AccessControlEntry {
                 }
             }
 
-            if !sourceAllBitAligned || !destAllBitAligned {
-                errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            }
             if !sourceAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Source IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Source IP not on netmask or bit boundary")
+                aclDelegate?.report(aclError: aclError)
             }
             if !destAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Destination IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Destination IP not on netmask or bit boundary")
+                aclDelegate?.report(aclError: aclError)
             }
             return true
         }
@@ -1901,12 +1907,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .aristav6), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .aristav6), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -1940,12 +1946,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .aristav6), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .aristav6), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -1987,13 +1993,13 @@ struct AccessControlEntry {
                     let secondSourcePort: UInt
                     switch ipProtocol {
                     case 6:
-                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .aristav6) else {
                             reportError()
                             return nil
                         }
                         secondSourcePort = secondPortOptional
                     case 17:
-                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .aristav6) else {
                             reportError()
                             return nil
                         }
@@ -2099,12 +2105,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .aristav6), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .aristav6), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -2133,12 +2139,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .aristav6), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .aristav6), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -2186,13 +2192,13 @@ struct AccessControlEntry {
                     let secondDestPort: UInt
                     switch ipProtocol {
                     case 6:
-                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .aristav6) else {
                             reportError()
                             return nil
                         }
                         secondDestPort = secondPortOptional
                     case 17:
-                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .aristav6, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .aristav6) else {
                             reportError()
                             return nil
                         }
@@ -2263,15 +2269,15 @@ struct AccessControlEntry {
             }
         }
         if validateArista() == false {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "Unable to create valid ACE based on line", delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to create valid ACE based on line")
+            aclDelegate?.report(aclError: aclError)
             return nil
         }
     }
 
     //MARK: NXOS IPV4 INIT
     
-    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, errorDelegate: ErrorDelegate?, delegateWindow: DelegateWindow?, nxos: Bool) {
+    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, nxos: Bool) {
         
         var tempSourcePortOperator: PortOperator?
         var tempFirstSourcePort: UInt?
@@ -2284,13 +2290,13 @@ struct AccessControlEntry {
         
         
         func reportError() {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "invalid after \(linePosition)", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "invalid after \(linePosition)")
+            aclDelegate?.report(aclError: aclError)
         }
         
         func reportUnsupported(keyword: String) {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer")
+            aclDelegate?.report(aclError: aclError)
         }
 
         func validateNxos() -> Bool { // true -> ACE validated
@@ -2340,14 +2346,13 @@ struct AccessControlEntry {
                 }
             }
 
-            if !sourceAllBitAligned || !destAllBitAligned {
-                errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            }
             if !sourceAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Source IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Source IP not on netmask or bit boundary")
+                aclDelegate?.report(aclError: aclError)
             }
             if !destAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Destination IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Destination IP not on netmask or bit boundary")
+                aclDelegate?.report(aclError: aclError)
             }
             return true
         }
@@ -2522,8 +2527,8 @@ struct AccessControlEntry {
                     reportError()
                 case .name(let objectName):
                     guard let sourceObjectGroup = aclDelegate?.getObjectGroupNetwork(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     self.sourceIp = sourceObjectGroup.ipRanges
@@ -2575,13 +2580,13 @@ struct AccessControlEntry {
                     reportError()
                 case .name(let objectName):
                     guard let sourceObjectGroup = aclDelegate?.getObjectGroupService(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     guard sourceObjectGroup.portRanges.count > 0 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Empty port object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Empty port object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     self.sourcePort = sourceObjectGroup.portRanges
@@ -2604,12 +2609,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .nxos), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .nxos), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -2646,13 +2651,13 @@ struct AccessControlEntry {
                     let secondSourcePort: UInt
                     switch ipProtocol {
                     case 6:
-                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .nxos) else {
                             reportError()
                             return nil
                         }
                         secondSourcePort = secondPortOptional
                     case 17:
-                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .nxos) else {
                             reportError()
                             return nil
                         }
@@ -2697,8 +2702,8 @@ struct AccessControlEntry {
                     reportError()
                 case .name(let objectName):
                     guard let destObjectGroup = aclDelegate?.getObjectGroupNetwork(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     self.destIp = destObjectGroup.ipRanges
@@ -2762,12 +2767,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .nxos), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .nxos), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -2785,13 +2790,13 @@ struct AccessControlEntry {
                     reportError()
                 case .name(let objectName):
                     guard let destObjectGroup = aclDelegate?.getObjectGroupService(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     guard destObjectGroup.portRanges.count > 0 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Empty port object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Empty port object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     self.destPort = destObjectGroup.portRanges
@@ -2825,13 +2830,13 @@ struct AccessControlEntry {
                     let secondDestPort: UInt
                     switch ipProtocol {
                     case 6:
-                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .nxos) else {
                             reportError()
                             return nil
                         }
                         secondDestPort = secondPortOptional
                     case 17:
-                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .nxos) else {
                             reportError()
                             return nil
                         }
@@ -2906,8 +2911,8 @@ struct AccessControlEntry {
             }
         }
         if validateNxos() == false {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "Unable to create valid ACE based on line", delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to create valid ACE based on line")
+            aclDelegate?.report(aclError: aclError)
             return nil
         }
     }
@@ -2915,7 +2920,7 @@ struct AccessControlEntry {
 
     //MARK: NXOS IPV6 INIT
     
-    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, errorDelegate: ErrorDelegate?, delegateWindow: DelegateWindow?, nxosv6: Bool) {
+    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, nxosv6: Bool) {
 
         var tempSourcePortOperator: PortOperator?
         var tempFirstSourcePort: UInt?
@@ -2927,13 +2932,13 @@ struct AccessControlEntry {
         self.linenum = linenum
         
         func reportError() {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "invalid after \(linePosition)", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "invalid after \(linePosition)")
+            aclDelegate?.report(aclError: aclError)
         }
 
         func reportUnsupported(keyword: String) {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer")
+            aclDelegate?.report(aclError: aclError)
         }
 
         func validateNxos() -> Bool { // true -> ACE validated
@@ -2982,14 +2987,13 @@ struct AccessControlEntry {
                 }
             }
             
-            if !sourceAllBitAligned || !destAllBitAligned {
-                errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            }
             if !sourceAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Source IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Source IP not on netmask or bit boundary")
+                aclDelegate?.report(aclError: aclError)
             }
             if !destAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Destination IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Destination IP not on netmask or bit boundary")
+                aclDelegate?.report(aclError: aclError)
             }
             return true
         }
@@ -3165,8 +3169,8 @@ struct AccessControlEntry {
                     reportError()
                 case .name(let objectName):
                     guard let sourceObjectGroup = aclDelegate?.getObjectGroupNetwork(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     self.sourceIp = sourceObjectGroup.ipRanges
@@ -3218,13 +3222,13 @@ struct AccessControlEntry {
                     reportError()
                 case .name(let objectName):
                     guard let sourceObjectGroup = aclDelegate?.getObjectGroupService(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     guard sourceObjectGroup.portRanges.count > 0 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Empty port object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Empty port object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     self.sourcePort = sourceObjectGroup.portRanges
@@ -3245,12 +3249,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .nxos), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .nxos), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -3287,13 +3291,13 @@ struct AccessControlEntry {
                     let secondSourcePort: UInt
                     switch ipProtocol {
                     case 6:
-                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .nxos) else {
                             reportError()
                             return nil
                         }
                         secondSourcePort = secondPortOptional
                     case 17:
-                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .nxos) else {
                             reportError()
                             return nil
                         }
@@ -3338,8 +3342,8 @@ struct AccessControlEntry {
                     reportError()
                 case .name(let objectName):
                     guard let destObjectGroup = aclDelegate?.getObjectGroupNetwork(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     self.destIp = destObjectGroup.ipRanges
@@ -3403,12 +3407,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .nxos), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .nxos), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -3426,13 +3430,13 @@ struct AccessControlEntry {
                     reportError()
                 case .name(let objectName):
                     guard let destObjectGroup = aclDelegate?.getObjectGroupService(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     guard destObjectGroup.portRanges.count > 0 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Empty port object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Empty port object group \(objectName)")
+                        aclDelegate?.report(aclError: aclError)
                         return nil
                     }
                     self.destPort = destObjectGroup.portRanges
@@ -3466,13 +3470,13 @@ struct AccessControlEntry {
                     let secondDestPort: UInt
                     switch ipProtocol {
                     case 6:
-                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.tcpPort(deviceType: .nxos) else {
                             reportError()
                             return nil
                         }
                         secondDestPort = secondPortOptional
                     case 17:
-                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .nxos, delegate: errorDelegate, delegateWindow: delegateWindow) else {
+                        guard let secondPortOptional = secondPortString.udpPort(deviceType: .nxos) else {
                             reportError()
                             return nil
                         }
@@ -3547,15 +3551,15 @@ struct AccessControlEntry {
             }
         }
         if validateNxos() == false {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "Unable to create valid ACE based on line", delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Inable to create valid ACE based on line")
+            aclDelegate?.report(aclError: aclError)
             return nil
         }
     }
     
     //MARK: WAS IOSXE IPV4 INIT
     
-    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, errorDelegate: ErrorDelegate?, delegateWindow: DelegateWindow?, ios: Bool) {
+    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate, ios: Bool) {
         var tempSourcePortOperator: PortOperator?
         var tempFirstSourcePort: UInt?
         var tempDestPortOperator: PortOperator?
@@ -3568,13 +3572,13 @@ struct AccessControlEntry {
         self.linenum = linenum
         
         func reportError() {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "invalid after \(linePosition)", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "invalid after \(linePosition)")
+            aclDelegate.report(aclError: aclError)
         }
         
         func reportUnsupported(keyword: String) {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.")
+            aclDelegate.report(aclError: aclError)
         }
         
         
@@ -3583,7 +3587,6 @@ struct AccessControlEntry {
         if words.count < 1 {
             return nil
         }
-        
         
         func analyzeFirstSourcePort(firstPort: UInt) -> Bool { // true == success
             guard firstPort >= 0 && firstPort <= 65535, let tempSourcePortOperator = tempSourcePortOperator else {
@@ -3710,18 +3713,16 @@ struct AccessControlEntry {
                 }
             }
             
-            if !sourceAllBitAligned || !destAllBitAligned {
-                errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            }
             if !sourceAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Source IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Source IP not on netmask or bit boundary")
+                aclDelegate.report(aclError: aclError)
             }
             if !destAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Destination IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Destination IP not on netmask or bit boundary")
+                aclDelegate.report(aclError: aclError)
             }
             return true
         }
-        
         
         wordLoop: for word in words {
             guard let token = IosToken(string: word) else {
@@ -3774,7 +3775,7 @@ struct AccessControlEntry {
                     return nil
                 case .number(let number):
                     self.listName = String(number)
-                    aclDelegate?.foundName(String(number), delegateWindow: delegateWindow)
+                    aclDelegate.foundName(String(number))
                     linePosition = .listName
                 case .name(let name):
                     self.listName = name
@@ -3846,8 +3847,8 @@ struct AccessControlEntry {
                     return nil
                 case .fourOctet(let dontCareBit):
                     guard let tempSourceIp = tempSourceIp, let sourceIp = IpRange(ipv4: tempSourceIp, dontCare: dontCareBit) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Possible discontiguous do-not-care-bits after \(linePosition) THIS LINE WILL NOT BE INCLUDED IN ANALYSIS", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Wildcard bits do not match CIDR prefix after \(linePosition)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.sourceIp = [sourceIp]
@@ -3875,9 +3876,9 @@ struct AccessControlEntry {
                     reportError()
                     return nil
                 case .name(let objectName):
-                    guard let sourceObjectGroup = aclDelegate?.getObjectGroupNetwork(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                    guard let sourceObjectGroup = aclDelegate.getObjectGroupNetwork(objectName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.sourceIp = sourceObjectGroup.ipRanges
@@ -3926,12 +3927,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .ios), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .ios), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -3959,8 +3960,8 @@ struct AccessControlEntry {
                 case .name(let name):
                     var possiblePort: UInt?
                     if self.ipProtocols.count > 1 {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .warning, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.")
+                        aclDelegate.report(aclError: aclError)
                     }
                     guard let ipProtocol = self.ipProtocols.first else {
                         reportError()
@@ -3968,11 +3969,11 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        if let tempPort = name.tcpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = name.tcpPort(deviceType: .ios) {
                             possiblePort = tempPort
                         }
                     case 17:
-                        if let tempPort = name.udpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = name.udpPort(deviceType: .ios) {
                             possiblePort = tempPort
                         }
                     default:
@@ -4014,8 +4015,8 @@ struct AccessControlEntry {
                     return nil
                 case .fourOctet(let dontCareBit):
                     guard let tempDestIp = tempDestIp, let destIp = IpRange(ipv4: tempDestIp, dontCare: dontCareBit) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Possible discontiguous do-not-care-bits after \(linePosition) THIS LINE WILL NOT BE INCLUDED IN ANALYSIS", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Wildcard bits do not match proper IP prefix mask \(linePosition)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.destIp = [destIp]
@@ -4043,9 +4044,9 @@ struct AccessControlEntry {
                     reportError()
                     return nil
                 case .name(let objectName):
-                    guard let destObjectGroup = aclDelegate?.getObjectGroupNetwork(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                    guard let destObjectGroup = aclDelegate.getObjectGroupNetwork(objectName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.destIp = destObjectGroup.ipRanges
@@ -4089,8 +4090,8 @@ struct AccessControlEntry {
                     linePosition = .end
                 case .established:
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meaning when IP protocol is tcp")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -4141,12 +4142,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .ios), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .ios), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -4174,8 +4175,8 @@ struct AccessControlEntry {
                 case .name(let secondPortString):
                     var possiblePort: UInt?
                     if self.ipProtocols.count > 1 {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .warning, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.")
+                        aclDelegate.report(aclError: aclError)
                     }
                     guard let ipProtocol = self.ipProtocols.first else {
                         reportError()
@@ -4183,11 +4184,11 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        if let tempPort = secondPortString.tcpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = secondPortString.tcpPort(deviceType: .ios) {
                             possiblePort = tempPort
                         }
                     case 17:
-                        if let tempPort = secondPortString.udpPort(deviceType: .ios, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = secondPortString.udpPort(deviceType: .ios) {
                             possiblePort = tempPort
                         }
                     default:
@@ -4219,13 +4220,13 @@ struct AccessControlEntry {
                     linePosition = .end
                 case .established:
                     guard self.established == false else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Error: found established keyword twice", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Found established keyword twice")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meaning when IP protocol is tcp")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -4250,13 +4251,13 @@ struct AccessControlEntry {
                     linePosition = .end
                 case .established:
                     guard self.established == false else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Error: found established keyword twice", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Found established keyword twice")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meaning when IP protocol is tcp")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -4285,15 +4286,15 @@ struct AccessControlEntry {
             }
         }// wordLoop
         if validateIosXe() == false {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "Unable to create valid ACE based on line", delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to create valid ACE based on line")
+            aclDelegate.report(aclError: aclError)
             return nil
         }//Init IOS and IOS-XE
     }
 
     //MARK: IOSXR IPV4 INIT
     
-    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, errorDelegate: ErrorDelegate?, delegateWindow: DelegateWindow?, iosxr: Bool) {
+    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate, iosxr: Bool) {
         var tempSourcePortOperator: PortOperator?
         var tempFirstSourcePort: UInt?
         var tempDestPortOperator: PortOperator?
@@ -4306,22 +4307,20 @@ struct AccessControlEntry {
         self.linenum = linenum
         
         func reportError() {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "invalid after \(linePosition)", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "invalid after \(linePosition)")
+            aclDelegate.report(aclError: aclError)
         }
         
         func reportUnsupported(keyword: String) {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.")
+            aclDelegate.report(aclError: aclError)
         }
 
-        
         let line = line.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         let words = line.split{ $0.isWhitespace }.map{ String($0)}
         if words.count < 1 {
             return nil
         }
-        
         
         func analyzeFirstSourcePort(firstPort: UInt) -> Bool { // true == success
             guard firstPort >= 0 && firstPort <= 65535, let tempSourcePortOperator = tempSourcePortOperator else {
@@ -4448,16 +4447,14 @@ struct AccessControlEntry {
                 }
             }
             
-            if !sourceAllBitAligned || !destAllBitAligned {
-                errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            }
             if !sourceAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Source IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Source IP not on netmask or bit boundary")
+                aclDelegate.report(aclError: aclError)
             }
             if !destAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Destination IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Destination IP not on netmask or bit boundary")
+                aclDelegate.report(aclError: aclError)
             }
-
             return true
         }
 
@@ -4550,8 +4547,8 @@ struct AccessControlEntry {
                     
                 case .fourOctet(let dontCareBit):
                     guard let tempSourceIp = tempSourceIp, let sourceIp = IpRange(ipv4: tempSourceIp, dontCare: dontCareBit) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Possible discontiguous do-not-care-bits after \(linePosition) THIS LINE WILL NOT BE INCLUDED IN ANALYSIS", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Wildcard bits do not match CIDR prefix after \(linePosition)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.sourceIp = [sourceIp]
@@ -4615,8 +4612,8 @@ struct AccessControlEntry {
                     return nil
                 case .fourOctet(let dontCareBit):
                     guard let tempSourceIp = tempSourceIp, let sourceIp = IpRange(ipv4: tempSourceIp, dontCare: dontCareBit) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Possible discontiguous do-not-care-bits after \(linePosition) THIS LINE WILL NOT BE INCLUDED IN ANALYSIS", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Wildcard bits do not match CIDR prefix after \(linePosition)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.sourceIp = [sourceIp]
@@ -4644,9 +4641,9 @@ struct AccessControlEntry {
                     reportError()
                     return nil
                 case .name(let objectName):
-                    guard let sourceObjectGroup = aclDelegate?.getObjectGroupNetwork(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                    guard let sourceObjectGroup = aclDelegate.getObjectGroupNetwork(objectName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.sourceIp = sourceObjectGroup.ipRanges
@@ -4700,12 +4697,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .iosxr), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .iosxr), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -4733,8 +4730,8 @@ struct AccessControlEntry {
                 case .name(let name):
                     var possiblePort: UInt?
                     if self.ipProtocols.count > 1 {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .warning, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.")
+                        aclDelegate.report(aclError: aclError)
                     }
                     guard let ipProtocol = self.ipProtocols.first else {
                         reportError()
@@ -4742,11 +4739,11 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        if let tempPort = name.tcpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = name.tcpPort(deviceType: .iosxr) {
                             possiblePort = tempPort
                         }
                     case 17:
-                        if let tempPort = name.udpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = name.udpPort(deviceType: .iosxr) {
                             possiblePort = tempPort
                         }
                     default:
@@ -4769,14 +4766,14 @@ struct AccessControlEntry {
                     return nil
                 //TODO: could a number or fourOctet be valid portgroup names?  If yes need to add some cases
                 case .name(let objectName):
-                    guard let serviceObjectGroup = aclDelegate?.getObjectGroupService(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown port-group \(objectName)", delegateWindow: delegateWindow)
+                    guard let serviceObjectGroup = aclDelegate.getObjectGroupService(objectName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown port-group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     guard serviceObjectGroup.portRanges.count > 0 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Cannot use empty port-group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Cannot use empty port-group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.sourcePort = serviceObjectGroup.portRanges
@@ -4811,8 +4808,8 @@ struct AccessControlEntry {
                     return nil
                 case .fourOctet(let dontCareBit):
                     guard let tempDestIp = tempDestIp, let destIp = IpRange(ipv4: tempDestIp, dontCare: dontCareBit) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Possible discontiguous do-not-care-bits after \(linePosition) THIS LINE WILL NOT BE INCLUDED IN ANALYSIS", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Wildcard bits do not match CIDR prefix after \(linePosition)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.destIp = [destIp]
@@ -4840,9 +4837,9 @@ struct AccessControlEntry {
                     reportError()
                     return nil
                 case .name(let objectName):
-                    guard let destObjectGroup = aclDelegate?.getObjectGroupNetwork(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                    guard let destObjectGroup = aclDelegate.getObjectGroupNetwork(objectName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.destIp = destObjectGroup.ipRanges
@@ -4890,8 +4887,8 @@ struct AccessControlEntry {
                     linePosition = .counter
                 case .established:
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meaning when IP protocol is TCP")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -4949,12 +4946,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .iosxr), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .iosxr), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -4973,14 +4970,14 @@ struct AccessControlEntry {
                     reportError()
                     return nil
                 case .name(let objectName):
-                    guard let destObjectGroup = aclDelegate?.getObjectGroupService(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                    guard let destObjectGroup = aclDelegate.getObjectGroupService(objectName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     guard destObjectGroup.portRanges.count > 0 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Empty port object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Empty port object group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.destPort = destObjectGroup.portRanges
@@ -5004,8 +5001,8 @@ struct AccessControlEntry {
                 case .name(let secondPortString):
                     var possiblePort: UInt?
                     if self.ipProtocols.count > 1 {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .warning, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.")
+                        aclDelegate.report(aclError: aclError)
                     }
                     guard let ipProtocol = self.ipProtocols.first else {
                         reportError()
@@ -5013,11 +5010,11 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        if let tempPort = secondPortString.tcpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = secondPortString.tcpPort(deviceType: .iosxr) {
                             possiblePort = tempPort
                         }
                     case 17:
-                        if let tempPort = secondPortString.udpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = secondPortString.udpPort(deviceType: .iosxr) {
                             possiblePort = tempPort
                         }
                     default:
@@ -5051,13 +5048,13 @@ struct AccessControlEntry {
                     linePosition = .counter
                 case .established:
                     guard self.established == false else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Error: found established keyword twice", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Found established keyword twice")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meaning when IP Protocol is TCP")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -5084,13 +5081,13 @@ struct AccessControlEntry {
                     linePosition = .end
                 case .established:
                     guard self.established == false else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Error: found established keyword twice", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Found established keyword twice")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meaning when IP protocol is TCP")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -5137,35 +5134,34 @@ struct AccessControlEntry {
             }
         }// wordLoop
         if validateIosXr() == false {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "Unable to create valid ACE based on line", delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to create valid ACE based on line")
+            aclDelegate.report(aclError: aclError)
             return nil
         }
     }//Init IOS-XR IPV4
     
     //MARK: IOSXR IPV6 INIT
-    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, errorDelegate: ErrorDelegate?, delegateWindow: DelegateWindow?, iosxrv6: Bool) {
+    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate, iosxrv6: Bool) {
         var tempSourcePortOperator: PortOperator?
         var tempFirstSourcePort: UInt?
         var tempDestPortOperator: PortOperator?
         var tempFirstDestPort: UInt?
         var linePosition: IosXrLinePosition = .beginning
-        var tempSourceIp: UInt128?
-        var tempDestIp: UInt128?
+        //var tempSourceIp: UInt128?
+        //var tempDestIp: UInt128?
         
         self.line = line
         self.linenum = linenum
         
         func reportError() {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "invalid after \(linePosition)", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Invalid after \(linePosition)")
+            aclDelegate.report(aclError: aclError)
         }
         
         func reportUnsupported(keyword: String) {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer")
+            aclDelegate.report(aclError: aclError)
         }
-        
         
         let line = line.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         let words = line.split{ $0.isWhitespace }.map{ String($0)}
@@ -5297,16 +5293,14 @@ struct AccessControlEntry {
                 }
             }
             
-            if !sourceAllBitAligned || !destAllBitAligned {
-                errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            }
             if !sourceAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Source IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Source IP not on netmask or bit boundary")
+                aclDelegate.report(aclError: aclError)
             }
             if !destAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Destination IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Source IP not on netmask or bit boundary")
+                aclDelegate.report(aclError: aclError)
             }
-            
             return true
         }
 
@@ -5454,9 +5448,9 @@ struct AccessControlEntry {
                     reportError()
                     return nil
                 case .name(let objectName):
-                    guard let sourceObjectGroup = aclDelegate?.getObjectGroupNetwork(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                    guard let sourceObjectGroup = aclDelegate.getObjectGroupNetwork(objectName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.sourceIp = sourceObjectGroup.ipRanges
@@ -5510,12 +5504,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .iosxr), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstSourcePort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .iosxr), analyzeFirstSourcePort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -5543,8 +5537,8 @@ struct AccessControlEntry {
                 case .name(let name):
                     var possiblePort: UInt?
                     if self.ipProtocols.count > 1 {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .warning, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.")
+                        aclDelegate.report(aclError: aclError)
                     }
                     guard let ipProtocol = self.ipProtocols.first else {
                         reportError()
@@ -5552,11 +5546,11 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        if let tempPort = name.tcpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = name.tcpPort(deviceType: .iosxr) {
                             possiblePort = tempPort
                         }
                     case 17:
-                        if let tempPort = name.udpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = name.udpPort(deviceType: .iosxr) {
                             possiblePort = tempPort
                         }
                     default:
@@ -5579,14 +5573,14 @@ struct AccessControlEntry {
                     return nil
                 //TODO: could a number or fourOctet be valid portgroup names?  If yes need to add some cases
                 case .name(let objectName):
-                    guard let serviceObjectGroup = aclDelegate?.getObjectGroupService(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown port-group \(objectName)", delegateWindow: delegateWindow)
+                    guard let serviceObjectGroup = aclDelegate.getObjectGroupService(objectName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown port-group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     guard serviceObjectGroup.portRanges.count > 0 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Cannot use empty port-group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Cannot use empty port-group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.sourcePort = serviceObjectGroup.portRanges
@@ -5637,9 +5631,9 @@ struct AccessControlEntry {
                     reportError()
                     return nil
                 case .name(let objectName):
-                    guard let destObjectGroup = aclDelegate?.getObjectGroupNetwork(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                    guard let destObjectGroup = aclDelegate.getObjectGroupNetwork(objectName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.destIp = destObjectGroup.ipRanges
@@ -5687,8 +5681,8 @@ struct AccessControlEntry {
                     linePosition = .counter
                 case .established:
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meaning when IP protocol is TCP")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -5746,12 +5740,12 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        guard let firstPort = firstStringPort.tcpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.tcpPort(deviceType: .iosxr), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
                     case 17:
-                        guard let firstPort = firstStringPort.udpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow), analyzeFirstDestPort(firstPort: firstPort) else {
+                        guard let firstPort = firstStringPort.udpPort(deviceType: .iosxr), analyzeFirstDestPort(firstPort: firstPort) else {
                             reportError()
                             return nil
                         }
@@ -5770,14 +5764,14 @@ struct AccessControlEntry {
                     reportError()
                     return nil
                 case .name(let objectName):
-                    guard let destObjectGroup = aclDelegate?.getObjectGroupService(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                    guard let destObjectGroup = aclDelegate.getObjectGroupService(objectName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     guard destObjectGroup.portRanges.count > 0 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Empty port object group \(objectName)", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Empty port object group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.destPort = destObjectGroup.portRanges
@@ -5801,8 +5795,8 @@ struct AccessControlEntry {
                 case .name(let secondPortString):
                     var possiblePort: UInt?
                     if self.ipProtocols.count > 1 {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .warning, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Unexpectedly found multiple ipProtocols for \(deviceType) after \(linePosition).  Please send this case to feedback@networkmom.net.  Analysis of this line may not be accurate.")
+                        aclDelegate.report(aclError: aclError)
                     }
                     guard let ipProtocol = self.ipProtocols.first else {
                         reportError()
@@ -5810,11 +5804,11 @@ struct AccessControlEntry {
                     }
                     switch ipProtocol {
                     case 6:
-                        if let tempPort = secondPortString.tcpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = secondPortString.tcpPort(deviceType: .iosxr) {
                             possiblePort = tempPort
                         }
                     case 17:
-                        if let tempPort = secondPortString.udpPort(deviceType: .iosxr, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tempPort = secondPortString.udpPort(deviceType: .iosxr) {
                             possiblePort = tempPort
                         }
                     default:
@@ -5848,13 +5842,13 @@ struct AccessControlEntry {
                     linePosition = .counter
                 case .established:
                     guard self.established == false else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Error: found established keyword twice", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Found established keyword twice")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meaning when IP protocol is TCP")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -5881,13 +5875,13 @@ struct AccessControlEntry {
                     linePosition = .end
                 case .established:
                     guard self.established == false else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Error: found established keyword twice", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Found established keyword twice")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     guard self.ipProtocols.count == 1, let ipProtocol = self.ipProtocols.first, ipProtocol == 6 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Established only has meaning when IP Protocol is tcp", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Established only has meaning when IP protocol is TCP")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.established = true
@@ -5934,15 +5928,15 @@ struct AccessControlEntry {
             }
         }// wordLoop
         if validateIosXr() == false {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "Unable to create valid ACE based on line", delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to create valid ACE based on line")
+            aclDelegate.report(aclError: aclError)
             return nil
         }
     }//Init IOS-XR IPV6
     
     
     //MARK: ASA
-    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate? = nil, errorDelegate: ErrorDelegate?, delegateWindow: DelegateWindow?, asa: Bool) {
+    init?(line: String, deviceType: DeviceType, linenum: Int, aclDelegate: AclDelegate, asa: Bool) {
         var tempSourcePortOperator: PortOperator?
         var tempFirstSourcePort: UInt?
         var tempDestPortOperator: PortOperator?
@@ -6024,28 +6018,25 @@ struct AccessControlEntry {
             if sourceAllIpv6 && destAllIpv4 {
                 return false
             }
-            
-            if !sourceAllBitAligned || !destAllBitAligned {
-                errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            }
             if !sourceAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Source IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Source IP not on netmask or bit boundary")
+                aclDelegate.report(aclError: aclError)
             }
             if !destAllBitAligned {
-                errorDelegate?.report(severity: .warning, message: "Destination IP not on netmask or bit boundary", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Destination IP not on netmask or bit boundary")
+                aclDelegate.report(aclError: aclError)
             }
-
             return true
         }
 
         func reportError() {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "invalid after \(linePosition)", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Invalid after \(linePosition)")
+            aclDelegate.report(aclError: aclError)
         }
         
         func reportUnsupported(keyword: String) {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer, not included in analysis.", line: linenum, delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Keyword \(keyword) for \(deviceType) after \(linePosition) not supported by ACL analyzer")
+            aclDelegate.report(aclError: aclError)
         }
 
         let line = line.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
@@ -6165,11 +6156,11 @@ struct AccessControlEntry {
                 case .number(let listNumber):
                     let listName = String(listNumber)
                     self.listName = listName
-                    aclDelegate?.foundName(listName, delegateWindow: delegateWindow)
+                    aclDelegate.foundName(listName)
                     linePosition = .listName
                 case .name(let listName):
                     self.listName = listName
-                    aclDelegate?.foundName(listName,delegateWindow: delegateWindow)
+                    aclDelegate.foundName(listName)
                     linePosition = .listName
                 }
             case .listName:
@@ -6212,8 +6203,8 @@ struct AccessControlEntry {
                     linePosition = .protocolObjectGroup
                 case .number(let possibleIpProtocol):
                     guard possibleIpProtocol > 0 && possibleIpProtocol < 256 else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "IP Protocol must be between 1 and 255 inclusive", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "IP Protocol must be between 1 and 255 inclusive")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.ipProtocols = [possibleIpProtocol]
@@ -6229,17 +6220,17 @@ struct AccessControlEntry {
                     return nil
                 case .number(let objectGroupNumber):
                     let objectGroupName = String(objectGroupNumber)
-                    guard let protocolObjectGroup = aclDelegate?.getObjectGroupProtocol(objectGroupName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectGroupName)", delegateWindow: delegateWindow)
+                    guard let protocolObjectGroup = aclDelegate.getObjectGroupProtocol(objectGroupName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectGroupName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.ipProtocols = protocolObjectGroup.ipProtocols
                     linePosition = .ipProtocol
                 case .name(let objectGroupName):
-                    guard let protocolObjectGroup = aclDelegate?.getObjectGroupProtocol(objectGroupName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectGroupName)", delegateWindow: delegateWindow)
+                    guard let protocolObjectGroup = aclDelegate.getObjectGroupProtocol(objectGroupName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectGroupName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.ipProtocols = protocolObjectGroup.ipProtocols
@@ -6273,7 +6264,7 @@ struct AccessControlEntry {
                     tempSourceIp = sourceIp
                     linePosition = .sourceIp
                 case .name(let possibleHostname):
-                    guard let sourceIp = aclDelegate?.getHostname(possibleHostname) else {
+                    guard let sourceIp = aclDelegate.getHostname(possibleHostname) else {
                         reportError()
                         return nil
                     }
@@ -6313,7 +6304,7 @@ struct AccessControlEntry {
                     self.sourceIp = [ipRange]
                     linePosition = .sourceMask
                 case .name(let possibleHostname):
-                    guard let sourceIp = aclDelegate?.getHostname(possibleHostname) else {
+                    guard let sourceIp = aclDelegate.getHostname(possibleHostname) else {
                         reportError()
                         return nil
                     }
@@ -6330,9 +6321,9 @@ struct AccessControlEntry {
                     reportError()
                     return nil
                 case .name(let objectName):
-                    guard let sourceObjectGroup = aclDelegate?.getObjectGroupNetwork(objectName) else {
-                        errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        errorDelegate?.report(severity: .error, message: "Unknown object group \(objectName)", delegateWindow: delegateWindow)
+                    guard let sourceObjectGroup = aclDelegate.getObjectGroupNetwork(objectName) else {
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unknown object group \(objectName)")
+                        aclDelegate.report(aclError: aclError)
                         return nil
                     }
                     self.sourceIp = sourceObjectGroup.ipRanges
@@ -6369,7 +6360,7 @@ struct AccessControlEntry {
                     tempDestIp = destIp
                     linePosition = .destIp
                 case .name(let possibleDestHostname):
-                    guard let destHostIp = aclDelegate?.getHostname(possibleDestHostname) else {
+                    guard let destHostIp = aclDelegate.getHostname(possibleDestHostname) else {
                         reportError()
                         return nil
                     }
@@ -6393,12 +6384,12 @@ struct AccessControlEntry {
                 case .name(let firstSourcePortString):
                     var possiblePort: UInt? = nil
                     if self.ipProtocols.contains(6) {
-                        if let tcpPort = firstSourcePortString.tcpPort(deviceType: .asa, delegate: errorDelegate,delegateWindow: delegateWindow) {
+                        if let tcpPort = firstSourcePortString.tcpPort(deviceType: .asa) {
                             possiblePort = tcpPort
                         }
                     }
                     if self.ipProtocols.contains(17) {
-                        if let tcpPort = firstSourcePortString.udpPort(deviceType: .asa, delegate: nil, delegateWindow: nil) {
+                        if let tcpPort = firstSourcePortString.udpPort(deviceType: .asa) {
                             possiblePort = tcpPort
                         }
                     }
@@ -6430,12 +6421,12 @@ struct AccessControlEntry {
                 case .name(let secondSourcePortString):
                     var possiblePort: UInt? = nil
                     if self.ipProtocols.contains(6) {
-                        if let tcpPort = secondSourcePortString.tcpPort(deviceType: .asa, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let tcpPort = secondSourcePortString.tcpPort(deviceType: .asa) {
                             possiblePort = tcpPort
                         }
                     }
                     if self.ipProtocols.contains(17) {
-                        if let tcpPort = secondSourcePortString.udpPort(deviceType: .asa, delegate: nil, delegateWindow: nil) {
+                        if let tcpPort = secondSourcePortString.udpPort(deviceType: .asa) {
                             possiblePort = tcpPort
                         }
                     }
@@ -6474,7 +6465,7 @@ struct AccessControlEntry {
                     tempDestIp = destIp
                     linePosition = .destIp
                 case .name(let destHostname):
-                    guard let destIp = aclDelegate?.getHostname(destHostname) else {
+                    guard let destIp = aclDelegate.getHostname(destHostname) else {
                         reportError()
                         return nil
                     }
@@ -6491,11 +6482,11 @@ struct AccessControlEntry {
                     return nil
                 case .name(let objectName):
                     //first check for service object group
-                    if let serviceObject = aclDelegate?.getObjectGroupService(objectName) {
+                    if let serviceObject = aclDelegate.getObjectGroupService(objectName) {
                         self.sourcePort = serviceObject.portRanges
                         linePosition = .lastSourcePort
                         //TODO do I need to deal with tcp-udp type?
-                    } else if let networkObject = aclDelegate?.getObjectGroupNetwork(objectName) {
+                    } else if let networkObject = aclDelegate.getObjectGroupNetwork(objectName) {
                             self.destIp = networkObject.ipRanges
                         linePosition = .destMask
                     } else {
@@ -6540,7 +6531,7 @@ struct AccessControlEntry {
                     self.destIp = [destIpRange]
                     linePosition = .destMask
                 case .name(let destHostname):
-                    guard let destIp = aclDelegate?.getHostname(destHostname) else {
+                    guard let destIp = aclDelegate.getHostname(destHostname) else {
                         reportError()
                         return nil
                     }
@@ -6557,7 +6548,7 @@ struct AccessControlEntry {
                     reportError()
                     return nil
                 case .name(let objectName):
-                    guard let networkObject = aclDelegate?.getObjectGroupNetwork(objectName) else {
+                    guard let networkObject = aclDelegate.getObjectGroupNetwork(objectName) else {
                         reportError()
                         return nil
                     }
@@ -6636,12 +6627,12 @@ struct AccessControlEntry {
                 case .name(let destPortString):
                     var possibleDestPort: UInt? = nil
                     if self.ipProtocols.contains(6) {
-                        if let port = destPortString.tcpPort(deviceType: .asa, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let port = destPortString.tcpPort(deviceType: .asa) {
                             possibleDestPort = port
                         }
                     }
                     if self.ipProtocols.contains(17) {
-                        if let port = destPortString.udpPort(deviceType: .asa, delegate: nil, delegateWindow: nil) {
+                        if let port = destPortString.udpPort(deviceType: .asa) {
                             possibleDestPort = port
                         }
                     }
@@ -6673,12 +6664,12 @@ struct AccessControlEntry {
                 case .name(let secondDestPortString):
                     var possibleSecondDestPort: UInt? = nil
                     if self.ipProtocols.contains(6) {
-                        if let port = secondDestPortString.tcpPort(deviceType: .asa, delegate: errorDelegate, delegateWindow: delegateWindow) {
+                        if let port = secondDestPortString.tcpPort(deviceType: .asa) {
                             possibleSecondDestPort = port
                         }
                     }
                     if self.ipProtocols.contains(17) {
-                        if let port = secondDestPortString.udpPort(deviceType: .asa, delegate: nil, delegateWindow: nil) {
+                        if let port = secondDestPortString.udpPort(deviceType: .asa) {
                             possibleSecondDestPort = port
                         }
                     }
@@ -6711,7 +6702,7 @@ struct AccessControlEntry {
                     reportError()
                     return nil
                 case .name(let objectName):
-                    guard let destServiceObject = aclDelegate?.getObjectGroupService(objectName) else {
+                    guard let destServiceObject = aclDelegate.getObjectGroupService(objectName) else {
                         reportError()
                         return nil
                     }
@@ -6773,8 +6764,8 @@ struct AccessControlEntry {
             }//switch linePosition
         }//wordLoop
         if validateAsa() == false {
-            errorDelegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-            errorDelegate?.report(severity: .error, message: "Unable to create valid ACE based on line", delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to create valid ACE based on line")
+            aclDelegate.report(aclError: aclError)
             return nil
         }
     }//init ASA

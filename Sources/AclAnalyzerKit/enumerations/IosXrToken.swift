@@ -57,7 +57,7 @@ enum IosXrToken: Equatable {
         case "port-group":
             self = .portgroup
         case "ahp","eigrp","esp","gre","icmp","igmp","igrp","ip","ipv4","ipinip","nos","ospf","pcp","pim","tcp","udp":
-            if let ipProtocol = string.ipProtocol(deviceType: .iosxr, delegate: nil, delegateWindow: nil) {
+            if let ipProtocol = string.ipProtocol(deviceType: .iosxr) {
                 self = .ipProtocol(ipProtocol)
             } else {
                 return nil

@@ -507,7 +507,7 @@ extension String {
             return nil
         }
     }
-    func udpPort(deviceType: DeviceType, delegate: ErrorDelegate?, delegateWindow: DelegateWindow?) -> UInt? {
+    func udpPort(deviceType: DeviceType) -> UInt? {
         switch (deviceType, self) {
         case (.arista,"acr-nema"),(.aristav6,"acr-nema"):
             return 104
@@ -774,7 +774,7 @@ extension String {
         case (_,"dnsix"):
             return 195
         case (_,"dns"):
-            delegate?.report(severity: .warning, message: "DNS port is short for dnsix which is UDP/195, this is probably not what you want", delegateWindow: delegateWindow)
+            //delegate?.report(severity: .warning, message: "DNS port is short for dnsix which is UDP/195, this is probably not what you want", delegateWindow: delegateWindow)
             return 195
         case (_,"domain"):
             return 53
@@ -785,7 +785,8 @@ extension String {
             case .asa, .nxos, .nxosv6, .arista, .iosxr,.iosxrv6:
                 break
             case .ios,.iosv6,.aristav6:
-                delegate?.report(severity: .warning, message: "isakmp port label is only supported on some ios platforms", delegateWindow: delegateWindow)
+                break
+                //delegate?.report(severity: .warning, message: "isakmp port label is only supported on some ios platforms", delegateWindow: delegateWindow)
             }
             return 500
         case (.asa,"kerberos"):
@@ -852,7 +853,8 @@ extension String {
     }
     //case "ahp","esp","hbh","icmp","ipv6","pcp","sctp","tcp","udp":
 
-    func ipProtocol(deviceType: DeviceType, delegate: ErrorDelegate?, delegateWindow: DelegateWindow?) -> UInt? {
+    //func ipProtocol(deviceType: DeviceType, delegate: ErrorDelegate?, delegateWindow: DelegateWindow?) -> UInt? {
+    func ipProtocol(deviceType: DeviceType) -> UInt? {
         switch (deviceType, self) {
         case (.arista,"ahp"),(.iosxr,"ahp"),(.iosxrv6,"ahp"),(.iosv6,"ahp"),(.nxos,"ahp"),(.nxosv6,"ahp"):
             return 51
@@ -863,10 +865,10 @@ extension String {
         case (.asa,"esp"),(.iosxr,"esp"),(.iosxrv6,"esp"),(.iosv6,"esp"),(.nxos,"esp"),(.nxosv6,"esp"):
             return 50
         case (.ios,"esp"):
-            delegate?.report(severity: .warning, message: "esp port label is only supported on some ios platforms", delegateWindow: delegateWindow)
+            //delegate?.report(severity: .warning, message: "esp port label is only supported on some ios platforms", delegateWindow: delegateWindow)
             return 50
         case (.iosv6,"hbh"):
-            delegate?.report(severity: .error, message: "hop by hop protocol not supported by ACL analyzer, line with protocol hbh will not be included in analysis", delegateWindow: delegateWindow)
+            //delegate?.report(severity: .error, message: "hop by hop protocol not supported by ACL analyzer, line with protocol hbh will not be included in analysis", delegateWindow: delegateWindow)
             return nil
         case (.ios,"gre"),(.iosv6,"gre"),(.asa,"gre"),(.nxos,"gre"),(.iosxr,"gre"),(.iosxrv6,"gre"):
             return 47
@@ -881,7 +883,7 @@ extension String {
         case (.iosxr,"igrp"),(.iosxrv6,"igrp"):
             return 9
         case (.iosv6,"ip"),(.nxosv6,"ip"):
-            delegate?.report(severity: .error, message: "Found protocol ip in ipv6 ACL, requires correction.  CRITICAL LINE NOT INCLUDED IN ANALYSIS", delegateWindow: delegateWindow)
+            //delegate?.report(severity: .error, message: "Found protocol ip in ipv6 ACL, requires correction.  CRITICAL LINE NOT INCLUDED IN ANALYSIS", delegateWindow: delegateWindow)
             return nil
         case (.arista,"ip"),(.ios,"ip"),(.asa,"ip"),(.nxos,"ip"),(.iosxr,"ip"):
             return 0
@@ -926,9 +928,9 @@ extension String {
                 return nil
             }
         } else {
-            if let portNumber = self.tcpPort(deviceType: .asa, delegate: nil, delegateWindow: nil) {
+            if let portNumber = self.tcpPort(deviceType: .asa) {
                 return portNumber
-            } else if let portNumber = self.udpPort(deviceType: .asa, delegate: nil, delegateWindow: nil) {
+            } else if let portNumber = self.udpPort(deviceType: .asa) {
                 return portNumber
             } else {
                 return nil

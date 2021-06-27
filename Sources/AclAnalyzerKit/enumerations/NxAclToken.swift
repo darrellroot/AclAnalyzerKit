@@ -42,7 +42,7 @@ enum NxAclToken: Equatable {
         case "log":
             self = .log
         case "ahp","eigrp","esp","gre","icmp","igmp","ip","nos","ospf","pcp","pim","tcp","udp":
-            if let ipProtocol = string.ipProtocol(deviceType: .nxos, delegate: nil, delegateWindow: nil) {
+            if let ipProtocol = string.ipProtocol(deviceType: .nxos) {
                 self = .ipProtocol(ipProtocol)
             } else {
                 return nil

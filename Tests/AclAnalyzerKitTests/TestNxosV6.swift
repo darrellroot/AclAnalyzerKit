@@ -27,7 +27,7 @@ class TestNxosV6: XCTestCase {
           permit tcp 2001:0db8:69f2::/48 2001:0db8:be03:2112::/64
           permit udp 2001:0db8:69f2::/48 2001:0db8:be03:2112::/64
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:0db8:85a3::".ipv6address!, destinationIp: "2001:0db8:be03:2112::".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
             let result = acl.analyze(socket: socket)
@@ -56,7 +56,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list L3Port
             permit tcp addrgroup ipv6-addr-group-A7 portgroup WEB any
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:db8:0:3ab0::1".ipv6address!, destinationIp: "2001:0db8:be03:2112::".ipv6address!, sourcePort: 80, destinationPort: 80, established: false, ipVersion: .IPv6)!
             let result = acl.analyze(socket: socket)
@@ -100,7 +100,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list L3Port
             10 permit tcp addrgroup ipv6-addr-group-A7 portgroup WEB any
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:db8:0:3ab0::1".ipv6address!, destinationIp: "2001:0db8:be03:2112::".ipv6address!, sourcePort: 80, destinationPort: 80, established: false, ipVersion: .IPv6)!
             let result = acl.analyze(socket: socket)
@@ -141,7 +141,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list L3Port
             10 permit tcp addrgroup ipv6-addr-group-A7 portgroup WEB any
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 0)
     }
     func testNxosInvalidPortGroup2() {
@@ -153,7 +153,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list L3Port
             10 permit tcp addrgroup ipv6-addr-group-A7 any portgroup WEB
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 0)
     }
     func testNxos4() {
@@ -164,7 +164,7 @@ class TestNxosV6: XCTestCase {
         permit tcp 2001:0db8:69f2::/48 2001:0db8:be03:2112::/64
         permit udp 2001:0db8:69f2::/48 2001:0db8:be03:2112::/64
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 4)
 
         do {
@@ -236,7 +236,7 @@ class TestNxosV6: XCTestCase {
         permit tcp any eq bgp any
         permit tcp any any eq bgp
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 2)
         
         do {
@@ -266,7 +266,7 @@ class TestNxosV6: XCTestCase {
         permit tcp any gt 1024 any eq bgp
         permit tcp any eq bgp any gt 1024
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 2)
         
         do {
@@ -310,7 +310,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list copp-system-p-acl-rip6
         permit udp any ff02::9/128 eq 521
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         
         do {
@@ -351,7 +351,7 @@ class TestNxosV6: XCTestCase {
         10 permit tcp 2001:504:2f::/64 eq bgp 2001:504:2f::/64
         20 permit tcp 2001:504:2f::/64 2001:504:2f::/64 eq bgp
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 2)
         
         do {
@@ -386,7 +386,7 @@ class TestNxosV6: XCTestCase {
         permit tcp 51d0:5fdd:b320:b271:8c90:a4f6:956a:d800/119 range 54104 60990 8199:830a:da13:2936:00af:d493:1254:9200/119 eq 54178 established
         permit tcp 7129:6ae6:2db5:0af2:9c4d:f46b:1225:0000/113 range 19471 56308 65df:5c00:926d:c359:2810:0000:0000:0000/76 range 1119 25347 log
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 2)
         
         do {
@@ -441,7 +441,7 @@ class TestNxosV6: XCTestCase {
         permit tcp 51d0:5fdd:b320:b271:8c90:a4f6:956a:d800/119 range 54104 60990 8199:830a:da13:2936:00af:d493:1254:9200/119 eq 54178 established
         permit tcp 7129:6ae6:2db5:0af2:9c4d:f46b:1225:0000/113 range 19471 56308 65df:5c00:926d:c359:2810:0000:0000:0000/76 range 1119 25347 log
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 2)
         
         do {
@@ -485,7 +485,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list MATCH-BGP-V6
         permit udp 51d0:5fdd:b320:b271:8c90:a4f6:956a:d800/119 range 54104 60990 8199:830a:da13:2936:00af:d493:1254:9200/119 eq 54178 established
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 0)
     }
     func testNxos12() {
@@ -493,7 +493,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list MATCH-BGP-V6
         permit tcp 51d0:5fdd:b320:b271:8c90:a4f6:956a:d800/119 range 54104 65536 8199:830a:da13:2936:00af:d493:1254:9200/119 eq 54178 established
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 0)
     }
     func testNxos13() {
@@ -501,7 +501,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list MATCH-BGP-V6
         permit tcp 51d0:5fdd:b320:b271:8c90:a4f6:956a:d800/119 range 54104 60990 8199:830a:da13:2936:00af:d493:1254:9200/119 eq 65536
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 0)
     }
     func testNxos14() {
@@ -509,7 +509,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list MATCH-BGP-V6
         permit tcp 51d0:5fdd:b320:b271:8c90:a4f6:956a:d800/119 range 54104 60990 8199:830a:da13:2936:00af:d493:1254:9200/129 eq 65536
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 0)
     }
     func testNxos15() {
@@ -517,7 +517,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list MATCH-BGP-V6
         permit tcp 51d0:5fdd:b320:b271:8c90:a4f6:956a:d800/119 lt 54104 8199:830a:da13:2936:00af:d493:1254:9200/119 gt 54178
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         
         do {
@@ -541,7 +541,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list MATCH-BGP-V6
         permit tcp 51d0:5fdd:b320:b271:8c90:a4f6:956a:d800/119 gt 54104 8199:830a:da13:2936:00af:d493:1254:9200/119 lt 54178
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         
         do {
@@ -565,7 +565,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list MATCH-BGP-V6
         permit tcp 51d0:5fdd:b320:b271:8c90:a4f6:956a:d800/119 neq 54104 8199:830a:da13:2936:00af:d493:1254:9200/119 neq 54178
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         
         do {
@@ -599,7 +599,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list acl-120
           permit tcp any any
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:0db8:85a3::".ipv6address!, destinationIp: "2001:0db8:be03:2112::".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
             let result = acl.analyze(socket: socket)
@@ -616,7 +616,7 @@ class TestNxosV6: XCTestCase {
         ipv6 access-list acl-120
           permit tcp any any established
         """
-        let acl = AccessList(sourceText: sample, deviceType: .nxosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .nxosv6)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:0db8:85a3::".ipv6address!, destinationIp: "2001:0db8:be03:2112::".ipv6address!, sourcePort: 33, destinationPort: 80, established: true, ipVersion: .IPv6)!
             let result = acl.analyze(socket: socket)

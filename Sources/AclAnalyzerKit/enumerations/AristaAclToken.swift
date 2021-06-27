@@ -36,7 +36,7 @@ enum AristaAclToken: Equatable {
         case "log":
             self = .log
         case "ahp","icmp","igmp","ip","ospf","pim","tcp","udp","vrrp":
-            if let ipProtocol = string.ipProtocol(deviceType: .arista, delegate: nil, delegateWindow: nil) {
+            if let ipProtocol = string.ipProtocol(deviceType: .arista) {
                 self = .ipProtocol(ipProtocol)
             } else {
                 return nil

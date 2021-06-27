@@ -10,8 +10,29 @@ import XCTest
 import Network
 @testable import AclAnalyzerKit
 
-class TestIosV6: XCTestCase {
+class TestIosV6: XCTestCase, AclDelegate {
 
+    //Faking acl delegate stuff to allow testing
+    func report(aclError: AclError) {
+        return
+    }
+    func getObjectGroupNetwork(_ group: String) -> ObjectGroupNetwork? {
+        return nil
+    }
+    func getObjectGroupService(_ group: String) -> ObjectGroupService? {
+        return nil
+    }
+    func getObjectGroupProtocol(_ group: String) -> ObjectGroupProtocol? {
+        return nil
+    }
+    func getHostname(_ hostname: String) -> UInt128? {
+        return nil
+    }
+    func foundName(_ name: String) {
+        return
+    }
+    // end faking acl delegate stuff to allow testing
+    
     override func setUp() {
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
@@ -21,7 +42,7 @@ class TestIosV6: XCTestCase {
     }
 
     func testTcpNamedPort() {
-        let ace = AccessControlEntry(line: "permit tcp 2001:db8::/32 eq domain 2001:3:4::4/48 eq www", deviceType: .iosv6, linenum: 5, errorDelegate: nil, delegateWindow: nil)
+        let ace = AccessControlEntry(line: "permit tcp 2001:db8::/32 eq domain 2001:3:4::4/48 eq www", deviceType: .iosv6, linenum: 5, aclDelegate: self)
         XCTAssert(ace?.sourcePort[0].maxPort == 53)
         XCTAssert(ace?.destPort[0].minPort == 80)
     }
@@ -35,13 +56,13 @@ class TestIosV6: XCTestCase {
         let ipRange = IpRange(cidr: "2001:0db8::3/32")
         XCTAssert(ipRange != nil)
         XCTAssert(ipRange?.bitAligned == false)
-        debugPrint(ipRange)
+        //debugPrint(ipRange)
     }
     func testIpRangeV6d() {
         let ipRange = IpRange(cidr: "2001:0db8::/32")
         XCTAssert(ipRange != nil)
         XCTAssert(ipRange?.bitAligned == true)
-        debugPrint(ipRange)
+        //debugPrint(ipRange)
     }
 
     func testIpRangeV6a() {
@@ -61,7 +82,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp any any eq www
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2602:0db8::3".ipv6address!, destinationIp: "2602:0db8::3".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
@@ -79,7 +100,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp 2001:DB8::/32 any eq www
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:0db8::3".ipv6address!, destinationIp: "2001:0db8::3".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
@@ -97,7 +118,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp 2001:DB8::/32 2620:0db8:0123:4567:89ab:cdef:0123:4567/127 eq www
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:0db8::3".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
@@ -135,7 +156,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp 2001:DB8::/32 range 10 20 2620:0db8:0123:4567:89ab:cdef:0123:4567/127 gt www
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:0db8::3".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 10, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -168,7 +189,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp 2001:DB8::/32 range 10 20 10.10.10.0/24 gt www
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 0)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:0db8::3".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 10, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -181,7 +202,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp 1.1.1.0/24 range 10 20 10.10.10.0/24 gt www
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 0)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:0db8::3".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 10, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -196,7 +217,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp 2001:DB8::/32 range 10 20 2620:0db8:0123:4567:89ab:cdef:0123:4567/127 gt www
     """
-        let acl = AccessList(sourceText: sample, deviceType: .ios, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .ios)
         XCTAssert(acl.accessControlEntries.count == 0)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:0db8::3".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 10, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -209,7 +230,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit ipv6 host 2001:DB8:0:4::2 any
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 10, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -224,7 +245,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit ip host 2001:DB8:0:4::2 any
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 0)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 10, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -237,7 +258,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit ipv6 host 2001:DB8:0:4::2 host 2620:0db8:0123:4567:89ab:cdef:0123:4567
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 10, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -257,7 +278,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit ipv6 host 2001:DB8:0:4::2 host 2620:0db8:0123:4567:89ab:cdef:0123:4567 eq 80
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 0)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 10, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -272,7 +293,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit 12 host 2001:DB8:0:4::2 neq 33 host 2620:0db8:0123:4567:89ab:cdef:0123:4567
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 0)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 10, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -285,7 +306,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit 12 host 2001:DB8:0:4::2 host 2620:0db8:0123:4567:89ab:cdef:0123:4567
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 12, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 10, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -298,7 +319,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp host 2001:DB8:0:4::2 neq 33 host 2620:0db8:0123:4567:89ab:cdef:0123:4567
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 34, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -326,7 +347,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp ::/0 neq 33 host 2620:0db8:0123:4567:89ab:cdef:0123:4567
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 34, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -344,7 +365,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp ::/0 neq 33 2620:0db8:0123:4567:89ab:cdef:0123:4567/128
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 34, destinationPort: 81, established: false, ipVersion: .IPv6)!
@@ -367,7 +388,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp ::/0 range 33 www 2620:0db8:0123:4567:89ab:cdef:0123:4567/128
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
@@ -396,7 +417,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp ::/0 range 33 80 2620:0db8:0123:4567:89ab:cdef:0123:4567/128
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
@@ -425,7 +446,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit udp ::/0 range 33 80 2620:0db8:0123:4567:89ab:cdef:0123:4567/128
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 17, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
@@ -453,7 +474,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit udp ::/0 range 33 domain 2620:0db8:0123:4567:89ab:cdef:0123:4567/128
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 17, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
@@ -481,7 +502,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit udp ::/0 range 33 domain any
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 17, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
@@ -509,7 +530,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit udp ::/0 range 33 domain any log
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 17, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
@@ -537,7 +558,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp ::/0 range 33 80 2620:0db8:0123:4567:89ab:cdef:0123:4567/128 established
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 33, destinationPort: 80, established: true, ipVersion: .IPv6)!
@@ -555,7 +576,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp ::/0 range 33 domain any eq www log
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 33, destinationPort: 80, established: false, ipVersion: .IPv6)!
@@ -578,7 +599,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit udp ::/0 range 33 domain any eq domain log
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 17, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 33, destinationPort: 53, established: false, ipVersion: .IPv6)!
@@ -601,7 +622,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp ::/0 range 33 80 2620:0db8:0123:4567:89ab:cdef:0123:4567/128 range 10 20
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 33, destinationPort: 10, established: false, ipVersion: .IPv6)!
@@ -629,7 +650,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp ::/0 range 33 80 2620:0db8:0123:4567:89ab:cdef:0123:4567/128 range domain www
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 53, destinationPort: 53, established: false, ipVersion: .IPv6)!
@@ -657,7 +678,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp ::/0 range 33 80 2620:0db8:0123:4567:89ab:cdef:0123:4567/128 range domain www established
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:0:4::2".ipv6address!, destinationIp: "2620:0db8:0123:4567:89ab:cdef:0123:4567".ipv6address!, sourcePort: 53, destinationPort: 53, established: true, ipVersion: .IPv6)!
@@ -675,7 +696,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp host 2001:DB8:1::32 eq bgp host 2001:DB8:2::32 eq 11000 sequence 1
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2001:DB8:1::32".ipv6address!, destinationIp: "2001:DB8:2::32".ipv6address!, sourcePort: 179, destinationPort: 11000, established: false, ipVersion: .IPv6)!
@@ -713,7 +734,7 @@ class TestIosV6: XCTestCase {
     ipv6 access-list extended acl1
     permit tcp 2620::33/128 eq www ::/0 range 10 20 established sequence 1
     """
-        let acl = AccessList(sourceText: sample, deviceType: .iosv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         do {
             let socket = Socket(ipProtocol: 6, sourceIp: "2620::33".ipv6address!, destinationIp: "2001:DB8:2::32".ipv6address!, sourcePort: 80, destinationPort: 10, established: true, ipVersion: .IPv6)!

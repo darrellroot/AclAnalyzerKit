@@ -59,7 +59,7 @@ enum IosTokenV6: Equatable {
             self = .established
         case "ahp","esp","hbh","icmp","ipv6","pcp","sctp","tcp","udp":
             //"ahp","eigrp","esp","gre","icmp","igmp","igrp","ipv6","ipinip","nos","ospf","pcp","pim","tcp","udp":
-            if let ipProtocol = string.ipProtocol(deviceType: .iosv6, delegate: nil, delegateWindow: nil) {
+            if let ipProtocol = string.ipProtocol(deviceType: .iosv6) {
                 self = .ipProtocol(ipProtocol)
             } else {
                 return nil

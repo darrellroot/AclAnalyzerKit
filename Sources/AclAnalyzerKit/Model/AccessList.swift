@@ -161,17 +161,17 @@ public class AccessList {
                     case "description":
                         break
                     case "eq":
-                        if let firstPort = UInt(secondWord) ?? secondWord.tcpPort(deviceType: .iosxr, delegate: delegate, delegateWindow: delegateWindow) ?? secondWord.udpPort(deviceType: .iosxr, delegate: delegate, delegateWindow: delegateWindow) , let portRange = PortRange(minPort: firstPort, maxPort: firstPort) {
+                        if let firstPort = UInt(secondWord) ?? secondWord.tcpPort(deviceType: .iosxr) ?? secondWord.udpPort(deviceType: .iosxr) , let portRange = PortRange(minPort: firstPort, maxPort: firstPort) {
                             objectGroup.portRanges.append(portRange)
                             continue lineLoop
                         }
                     case "lt":
-                        if let firstPort = UInt(secondWord) ?? secondWord.tcpPort(deviceType: .iosxr, delegate: delegate, delegateWindow: delegateWindow) ?? secondWord.udpPort(deviceType: .iosxr, delegate: delegate, delegateWindow: delegateWindow), firstPort > 0, let portRange = PortRange(minPort: 0, maxPort: firstPort - 1) {
+                        if let firstPort = UInt(secondWord) ?? secondWord.tcpPort(deviceType: .iosxr) ?? secondWord.udpPort(deviceType: .iosxr), firstPort > 0, let portRange = PortRange(minPort: 0, maxPort: firstPort - 1) {
                             objectGroup.portRanges.append(portRange)
                             continue lineLoop
                         }
                     case "gt":
-                        if let firstPort = UInt(secondWord) ?? secondWord.tcpPort(deviceType: .iosxr, delegate: delegate, delegateWindow: delegateWindow) ?? secondWord.udpPort(deviceType: .iosxr, delegate: delegate, delegateWindow: delegateWindow), firstPort < MAXPORT, let portRange = PortRange(minPort: firstPort + 1, maxPort: MAXPORT) {
+                        if let firstPort = UInt(secondWord) ?? secondWord.tcpPort(deviceType: .iosxr) ?? secondWord.udpPort(deviceType: .iosxr), firstPort < MAXPORT, let portRange = PortRange(minPort: firstPort + 1, maxPort: MAXPORT) {
                             objectGroup.portRanges.append(portRange)
                             continue lineLoop
                         }
@@ -258,7 +258,9 @@ public class AccessList {
                         lastSequenceSeen = 0
                         objectName = objectNameTemp
                    } else {
-                        delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Duplicate object-group name \(objectNameTemp)")
+                    self.aclErrors.append(aclError)
+                        //delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
                         configurationMode = .accessControlEntry
                         lastSequenceSeen = 0
                         objectName = nil
@@ -269,7 +271,9 @@ public class AccessList {
             
             if deviceType == .nxosv6 && words[safe: 0] == "object-group" && words[safe: 1] == "ipv6" && words[safe: 2] == "address" , let objectNameTemp = words[safe: 3] {
                 guard self.objectGroupNetworks[objectNameTemp] == nil  && self.objectGroupServices[objectNameTemp] == nil && self.objectGroupProtocols[objectNameTemp] == nil else {
-                    delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Duplicate object-group name \(objectNameTemp)")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
                     configurationMode = .accessControlEntry
                     lastSequenceSeen = 0
                     objectName = nil
@@ -284,7 +288,9 @@ public class AccessList {
 
             if deviceType == .nxos && words[safe: 0] == "object-group" && words[safe: 1] == "ip" && words[safe: 2] == "address" , let objectNameTemp = words[safe: 3] {
                 guard self.objectGroupNetworks[objectNameTemp] == nil  && self.objectGroupServices[objectNameTemp] == nil && self.objectGroupProtocols[objectNameTemp] == nil else {
-                        delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Duplicate object-group name \(objectNameTemp)")
+                        self.aclErrors.append(aclError)
+                        //delegate?.report(severity: .error, message: "Duplicate object-group name \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
                         configurationMode = .accessControlEntry
                         lastSequenceSeen = 0
                         objectName = nil
@@ -299,8 +305,10 @@ public class AccessList {
             
             if (deviceType == .nxos || deviceType == .nxosv6) && words[safe: 0] == "object-group" && words[safe: 1] == "ip" && words[safe: 2] == "port", let objectNameTemp = words[safe: 3] {
                 guard self.objectGroupNetworks[objectNameTemp] == nil  && self.objectGroupServices[objectNameTemp] == nil && self.objectGroupProtocols[objectNameTemp] == nil else {
-                    delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                    delegate?.report(severity: .error, message: "Duplicate object-group service \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Duplicate object-group service \(objectNameTemp)")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .error, message: "Duplicate object-group service \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
                     configurationMode = .accessControlEntry
                     lastSequenceSeen = 0
                     objectName = nil
@@ -320,9 +328,10 @@ public class AccessList {
                 }
                 if words[safe: 0] == "host" {
                     guard let ipString = words[safe:1], let ipAddress = ipString.ipv4address else {
-                        
-                        delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        delegate?.report(severity: .error, message: "", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Invalid line")
+                        self.aclErrors.append(aclError)
+                        //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                        //delegate?.report(severity: .error, message: "", line: linenum, delegateWindow: delegateWindow)
                         continue lineLoop
                     }
                     let hostIpRange = IpRange(minIp: ipAddress, maxIp: ipAddress, ipVersion: .IPv4)
@@ -338,8 +347,10 @@ public class AccessList {
                 }
                 if let possibleIpString = words[safe: 0], let possibleNetmaskString = words[safe: 1], let ipRange = IpRange(ip: possibleIpString, netmask: possibleNetmaskString) {
                     if ipRange.bitAligned == false {
-                        delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        delegate?.report(severity: .warning, message: "Not aligned on bit boundary", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "\(possibleIpString) Not aligned on bit boundary")
+                        self.aclErrors.append(aclError)
+                        //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                        //delegate?.report(severity: .warning, message: "Not aligned on bit boundary", line: linenum, delegateWindow: delegateWindow)
                     }
                     objectGroup.append(ipRange: ipRange)
                     continue lineLoop
@@ -360,9 +371,11 @@ public class AccessList {
                 }
                 if words[safe: 0] == "host" {
                     guard let ipString = words[safe:1], let ipAddress = ipString.ipv6address else {
-                        
-                        delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        delegate?.report(severity: .error, message: "", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Invalid line")
+                        self.aclErrors.append(aclError)
+
+                        //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                        //delegate?.report(severity: .error, message: "", line: linenum, delegateWindow: delegateWindow)
                         continue lineLoop
                     }
                     let hostIpRange = IpRange(minIp: ipAddress, maxIp: ipAddress, ipVersion: .IPv6)
@@ -378,8 +391,10 @@ public class AccessList {
                 }
                 if let possibleCidr = words[safe: 0], let ipRange = IpRange(cidr: possibleCidr) {
                     if ipRange.bitAligned == false {
-                        delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        delegate?.report(severity: .warning, message: "Not aligned on bit boundary", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "\(possibleCidr) not aligned on bit boundary")
+                        self.aclErrors.append(aclError)
+                        //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                        //delegate?.report(severity: .warning, message: "Not aligned on bit boundary", line: linenum, delegateWindow: delegateWindow)
                     }
                     objectGroup.append(ipRange: ipRange)
                     continue lineLoop
@@ -397,8 +412,10 @@ public class AccessList {
                 if let firstWord = words.first, let thisSequence = UInt(firstWord) {
                     localwords = Array(words.dropFirst())
                     if thisSequence <= lastSequenceSeen {
-                        delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        delegate?.report(severity: .error, message: "Sequence number not increasing.  ACL analysis will not be accurate!", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Sequence number not increasing. ACL analysis will not be accurate!")
+                        self.aclErrors.append(aclError)
+                        //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                        //delegate?.report(severity: .error, message: "Sequence number not increasing.  ACL analysis will not be accurate!", line: linenum, delegateWindow: delegateWindow)
                     }
                     lastSequenceSeen = thisSequence
                 } else {
@@ -411,9 +428,11 @@ public class AccessList {
                         break
                         //do nothing and proceed to ACE analysis
                     case .portOperator(let portOperator):
-                        guard let firstPortString = localwords[safe: 1], let firstPort = UInt(firstPortString) ?? firstPortString.tcpPort(deviceType: .nxos, delegate: delegate, delegateWindow: delegateWindow) ?? firstPortString.udpPort(deviceType: .nxos, delegate: delegate, delegateWindow: delegateWindow), firstPort >= 0, firstPort <= MAXPORT else {
-                            delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                            delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
+                        guard let firstPortString = localwords[safe: 1], let firstPort = UInt(firstPortString) ?? firstPortString.tcpPort(deviceType: .nxos) ?? firstPortString.udpPort(deviceType: .nxos), firstPort >= 0, firstPort <= MAXPORT else {
+                            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Error decoding nxos object-group")
+                            self.aclErrors.append(aclError)
+                            //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                            //delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
                             continue lineLoop
                         }
                         switch portOperator {
@@ -422,8 +441,10 @@ public class AccessList {
                                 currentObjectGroup.append(portRange: portRange)
                                 continue lineLoop
                             } else {
-                                delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                                delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
+                                let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Error decoding nxos object-group")
+                                self.aclErrors.append(aclError)
+                                //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                                //delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
                                 continue lineLoop
                             }
                         case .gt:
@@ -431,8 +452,10 @@ public class AccessList {
                                 currentObjectGroup.append(portRange: portRange)
                                 continue lineLoop
                             } else {
-                                delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                                delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
+                                let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Error decoding nxos object-group")
+                                self.aclErrors.append(aclError)
+                                //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                                //delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
                                 continue lineLoop
                             }
                         case .lt:
@@ -440,8 +463,10 @@ public class AccessList {
                                 currentObjectGroup.append(portRange: portRange)
                                 continue lineLoop
                             } else {
-                                delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                                delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
+                                let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Error decoding nxos object-group")
+                                self.aclErrors.append(aclError)
+                                //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                                //delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
                                 continue lineLoop
                             }
                         case .ne:
@@ -453,12 +478,14 @@ public class AccessList {
                             }
                             continue lineLoop
                         case .range:
-                            if let secondPortString = localwords[safe: 2], let secondPort = UInt(secondPortString) ?? secondPortString.tcpPort(deviceType: .nxos, delegate: delegate, delegateWindow: delegateWindow) ?? secondPortString.udpPort(deviceType: .nxos, delegate: delegate, delegateWindow: delegateWindow), secondPort >= 0, secondPort <= MAXPORT, let portRange = PortRange(minPort: firstPort, maxPort: secondPort) {
+                            if let secondPortString = localwords[safe: 2], let secondPort = UInt(secondPortString) ?? secondPortString.tcpPort(deviceType: .nxos) ?? secondPortString.udpPort(deviceType: .nxos), secondPort >= 0, secondPort <= MAXPORT, let portRange = PortRange(minPort: firstPort, maxPort: secondPort) {
                                 currentObjectGroup.append(portRange: portRange)
                                 continue lineLoop
                             } else {
-                                delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                                delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
+                                let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Error decoding nxos object-group")
+                                self.aclErrors.append(aclError)
+                                //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                                //delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
                                 continue lineLoop
                             }
                         }
@@ -472,8 +499,10 @@ public class AccessList {
                 if let firstword = localwords[safe: 0], let thisSequence = UInt(firstword) {
                     localwords.removeFirst()
                     if thisSequence <= lastSequenceSeen {
-                        delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        delegate?.report(severity: .error, message: "Sequence number not increasing.  ACL analysis will not be accurate!", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Sequence number not increasing.  ACL analysis will not be accurate!")
+                        self.aclErrors.append(aclError)
+                        //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                        //delegate?.report(severity: .error, message: "Sequence number not increasing.  ACL analysis will not be accurate!", line: linenum, delegateWindow: delegateWindow)
                     }
                     lastSequenceSeen = thisSequence
                 }
@@ -486,8 +515,10 @@ public class AccessList {
                     //do nothing and continue, we might be done with object group
                     case .host:
                         guard let word2 = localwords[safe: 1], let token2 = NxAclTokenV6(string: word2), case let .addressV6(hostIp) = token2 else {
-                            delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                            delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
+                            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Error decoding nxos object-group")
+                            self.aclErrors.append(aclError)
+                            //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                            //delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
                             configurationMode = .accessControlEntry
                             lastSequenceSeen = 0
                             objectName = nil
@@ -520,8 +551,10 @@ public class AccessList {
                 if let firstword = localwords[safe: 0], let thisSequence = UInt(firstword) {
                     localwords.removeFirst()
                     if thisSequence <= lastSequenceSeen {
-                        delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        delegate?.report(severity: .error, message: "Sequence number not increasing.  ACL analysis will not be accurate!", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Sequence number not increasing.  ACL analysis will not be accurate!")
+                        self.aclErrors.append(aclError)
+                        //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                        //delegate?.report(severity: .error, message: "Sequence number not increasing.  ACL analysis will not be accurate!", line: linenum, delegateWindow: delegateWindow)
                     }
                     lastSequenceSeen = thisSequence
                 }
@@ -534,8 +567,10 @@ public class AccessList {
                         //do nothing and continue, we might be done with object group
                     case .host:
                         guard let word2 = localwords[safe: 1], let token2 = NxAclToken(string: word2), case let .fourOctet(hostIp) = token2, hostIp >= 0, hostIp <= MAXIP else {
-                            delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                            delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
+                            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Error decoding nxos object-group")
+                            self.aclErrors.append(aclError)
+                            //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                            //delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
                             configurationMode = .accessControlEntry
                             lastSequenceSeen = 0
                             objectName = nil
@@ -546,8 +581,10 @@ public class AccessList {
                         continue lineLoop
                     case .fourOctet(let network):
                         guard let word2 = localwords[safe: 1], let token2 = NxAclToken(string: word2), case let .fourOctet(mask) = token2, mask >= 0, mask <= MAXIP, let ipRange = IpRange(ipv4: network, dontCare: mask) else {
-                            delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                            delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
+                            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Error decoding nxos object-group")
+                            self.aclErrors.append(aclError)
+                            //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                            //delegate?.report(severity: .error, message: "Error decoding nxos object-group", line: linenum, delegateWindow: delegateWindow)
                             configurationMode = .accessControlEntry
                             lastSequenceSeen = 0
                             objectName = nil
@@ -564,8 +601,10 @@ public class AccessList {
             
             //if line.starts(with: "object-group service") {
             if deviceType == .asa && words[safe: 0] == "object-group" && words[safe: 1] == "service" {
-                delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                delegate?.report(severity: .error, message: "object-group service not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "object-group service not supported for device type \(deviceType)")
+                self.aclErrors.append(aclError)
+                //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                //delegate?.report(severity: .error, message: "object-group service not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
                 continue lineLoop
             }/*
                 if let objectNameTemp = words[safe: 2] {
@@ -628,8 +667,10 @@ public class AccessList {
             if words[safe: 0] == "object-group" && words[safe: 1] == "protocol" {
             //if line.starts(with: "object-group protocol") {
                 guard deviceType == .asa else {
-                    delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                    delegate?.report(severity: .error, message: "object-group protocol not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "object-group protocol not supported for device type \(deviceType)")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .error, message: "object-group protocol not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
                     continue lineLoop
                 }
                 //let words = line.split{ $0.isWhitespace }.map{ String($0)}
@@ -641,7 +682,9 @@ public class AccessList {
                         lastSequenceSeen = 0
                         objectName = objectNameTemp
                     } else {
-                        delegate?.report(severity: .error, message: "Duplicate object-group protocol \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Duplicate object-group protocol \(objectNameTemp)")
+                        self.aclErrors.append(aclError)
+                        //delegate?.report(severity: .error, message: "Duplicate object-group protocol \(objectNameTemp)", line: linenum, delegateWindow: delegateWindow)
                         configurationMode = .accessControlEntry
                         lastSequenceSeen = 0
                         objectName = nil
@@ -652,8 +695,10 @@ public class AccessList {
             
             if line.starts(with: "group-object") {
                 guard deviceType == .asa else {
-                    delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                    delegate?.report(severity: .error, message: "object-group not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "object-group not supported for device type \(deviceType)")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .error, message: "object-group not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
                     continue lineLoop
                 }
                 let words = line.split{ $0.isWhitespace }.map{ String($0)}
@@ -675,29 +720,37 @@ public class AccessList {
                         if currentObjectGroup.type == nestedObjectGroup.type {
                             currentObjectGroup.portRanges.append(contentsOf: nestedObjectGroup.portRanges)
                         } else {
-                            delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                            delegate?.report(severity: .error, message: "nested service object-groups must be the same type", line: linenum, delegateWindow: delegateWindow)
+                            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "nested service object-groups must be the same type")
+                            self.aclErrors.append(aclError)
+                            //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                            //delegate?.report(severity: .error, message: "nested service object-groups must be the same type", line: linenum, delegateWindow: delegateWindow)
                             continue lineLoop
                         }
                         continue lineLoop
                     }
                 case .accessListExtended, .accessControlEntry, .nxosObjectGroupPort, .nxosObjectGroupAddress, .asaObjectNetwork:
-                    delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                    delegate?.report(severity: .error, message: "unexpected group-object", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "unexpected group-object")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .error, message: "unexpected group-object", line: linenum, delegateWindow: delegateWindow)
                     continue lineLoop
                 }
             }
             if words[safe: 0] == "protocol-object" {
             //if line.starts(with: "protocol-object") {
                 guard deviceType == .asa else {
-                    delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                    delegate?.report(severity: .error, message: "object-group not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "object-group not supported for device type \(deviceType)")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .error, message: "object-group not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
                     continue lineLoop
                 }
                 let words = line.split{ $0.isWhitespace }.map{ String($0)}
                 //let words = line.components(separatedBy: NSCharacterSet.whitespaces).filter { !$0.isEmpty }
                 if configurationMode != .objectGroupProtocol {
-                    delegate?.report(severity: .error, message: "Unexpected protocol-object", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unexpected protocol-object")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .error, message: "Unexpected protocol-object", line: linenum, delegateWindow: delegateWindow)
                     continue lineLoop
                 }
                 if let term1 = words[safe: 1], let objectName = objectName {
@@ -707,14 +760,18 @@ public class AccessList {
                         if protocolNumber < 256 {
                             ipProtocol = protocolNumber
                         } else {
-                            delegate?.report(severity: .error, message: "IP protocol must be between 0 and 255 inclusive", line: linenum, delegateWindow: delegateWindow)
+                            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "IP protocol must be between 0 and 255 inclusive")
+                            self.aclErrors.append(aclError)
+                            //delegate?.report(severity: .error, message: "IP protocol must be between 0 and 255 inclusive", line: linenum, delegateWindow: delegateWindow)
                             continue lineLoop
                         }
                     } else {
-                        if let protocolNumber = term1.ipProtocol(deviceType: .asa, delegate: delegate, delegateWindow: delegateWindow) {
+                        if let protocolNumber = term1.ipProtocol(deviceType: .asa) {
                             ipProtocol = protocolNumber
                         } else {
-                            delegate?.report(severity: .error, message: "Unable to identify IP protocol", line: linenum, delegateWindow: delegateWindow)
+                            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to identify IP protocol")
+                            self.aclErrors.append(aclError)
+                            //delegate?.report(severity: .error, message: "Unable to identify IP protocol", line: linenum, delegateWindow: delegateWindow)
                             continue lineLoop
                         }
                     }
@@ -722,21 +779,27 @@ public class AccessList {
                         objectGroupProtocol.append(ipProtocol: ipProtocol)
                     }
                 } else {
-                    delegate?.report(severity: .error, message: "Unable to identify IP protocol", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to identify IP protocol")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .error, message: "Unable to identify IP protocol", line: linenum, delegateWindow: delegateWindow)
                 }
                 continue lineLoop
             }
             
             if deviceType == .asa && asaNamesEnabled == true && words[safe: 0] == "name", let ipString = words[safe: 1], let nameString = words[safe: 2], let ipAddress = ipString.ipv4address {
                 guard hostnames[nameString] == nil else {
-                    delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                    delegate?.report(severity: .error, message: "name \(nameString) duplicates prior name", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "name \(nameString) duplicates prior name")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .error, message: "name \(nameString) duplicates prior name", line: linenum, delegateWindow: delegateWindow)
                     continue lineLoop
                 }
                 guard ipAddress <= UInt.MAXIPV4 else {
                     //should not get here
-                    delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                    delegate?.report(severity: .error, message: "unexpected host ip address value calculated \(ipAddress) please send data to feedback@networkmom.net", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unexpected host ip address value calculated \(ipAddress) please send data to feedback@networkmom.net")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .error, message: "unexpected host ip address value calculated \(ipAddress) please send data to feedback@networkmom.net", line: linenum, delegateWindow: delegateWindow)
                     continue lineLoop
                 }
                 hostnames[nameString] = ipAddress
@@ -744,8 +807,10 @@ public class AccessList {
             }
             
             if deviceType == .asa && asaNamesEnabled == false && words[safe: 0] == "name" && words.count >= 3 {
-                delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                delegate?.report(severity: .error, message: "ASA name command requires prior names command", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "ASA name command requires prior names command")
+                self.aclErrors.append(aclError)
+                //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                //delegate?.report(severity: .error, message: "ASA name command requires prior names command", line: linenum, delegateWindow: delegateWindow)
                 continue lineLoop
             }
             
@@ -779,16 +844,20 @@ public class AccessList {
                         // network-object host AZ4-vTEST
                         guard hostIp < UInt.MAXIPV4 else {
                             // should not get here
-                            delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                            delegate?.report(severity: .error, message: "unexpected error decoding host ip", line: linenum, delegateWindow: delegateWindow)
+                            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unexpected error decoding host ip")
+                            self.aclErrors.append(aclError)
+                            //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                            //delegate?.report(severity: .error, message: "unexpected error decoding host ip", line: linenum, delegateWindow: delegateWindow)
                             continue lineLoop
                         }
                         let ipRange = IpRange(minIp: hostIp, maxIp: hostIp, ipVersion: .IPv4)
                         objectGroupNetwork.append(ipRange: ipRange)
                         continue lineLoop
                     } else {
-                        delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        delegate?.report(severity: .error, message: "unable to decode network-object", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to decode network-object")
+                        self.aclErrors.append(aclError)
+                        //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                        //delegate?.report(severity: .error, message: "unable to decode network-object", line: linenum, delegateWindow: delegateWindow)
                         continue lineLoop
                     }
                 } else {
@@ -797,8 +866,10 @@ public class AccessList {
                     if let subnet = term1String.ipv4address {
                         //  network-object 131.252.209.0 255.255.255.0
                         guard let ipRange = IpRange(ip: subnet, netmask: term2String) else {
-                            delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                            delegate?.report(severity: .error, message: "unable to decode network-object", line: linenum, delegateWindow: delegateWindow)
+                            let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Unable to decode network-object")
+                            self.aclErrors.append(aclError)
+                            //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                            //delegate?.report(severity: .error, message: "unable to decode network-object", line: linenum, delegateWindow: delegateWindow)
                             continue lineLoop
                         }
                         objectGroupNetwork.append(ipRange: ipRange)
@@ -824,7 +895,9 @@ public class AccessList {
                 if let aclName = words[safe: 2] {
                     aclNames.insert(aclName)
                     if aclNames.count > 1 {
-                        self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "ACL has inconsistent names: \(aclNames) found")
+                        self.aclErrors.append(aclError)
+                        //self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
                     }
                 }
                 continue lineLoop
@@ -840,7 +913,9 @@ public class AccessList {
                 if let aclName = words[safe: 3] {
                     aclNames.insert(aclName)
                     if aclNames.count > 1 {
-                        self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "ACL has inconsistent names: \(aclNames) found")
+                        self.aclErrors.append(aclError)
+                        //self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
                     }
                 }
                 continue lineLoop
@@ -856,7 +931,9 @@ public class AccessList {
                 if let aclName = words[safe: 2] {
                     aclNames.insert(String(aclName))
                     if aclNames.count > 1 {
-                        self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "ACL has inconsistent names: \(aclNames) found")
+                        self.aclErrors.append(aclError)
+                        //self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
                     }
                 }
                 continue lineLoop
@@ -871,7 +948,9 @@ public class AccessList {
                 if let aclName = words[safe: 2] {
                     aclNames.insert(String(aclName))
                     if aclNames.count > 1 {
-                        self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "ACL has inconsistent names: \(aclNames) found")
+                        self.aclErrors.append(aclError)
+                        //self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
                     }
                 }
                 continue lineLoop
@@ -886,7 +965,9 @@ public class AccessList {
                 if let aclName = words[safe: 2] {
                     aclNames.insert(String(aclName))
                     if aclNames.count > 1 {
-                        self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "ACL has inconsistent names: \(aclNames) found")
+                        self.aclErrors.append(aclError)
+                        //self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
                     }
                 }
                 continue lineLoop
@@ -901,7 +982,9 @@ public class AccessList {
                 if let aclName = words[safe: 2] {
                     aclNames.insert(String(aclName))
                     if aclNames.count > 1 {
-                        self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "ACL has inconsistent names: \(aclNames) found")
+                        self.aclErrors.append(aclError)
+                        //self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
                     }
                 }
                 continue lineLoop
@@ -916,7 +999,9 @@ public class AccessList {
                 if let aclName = words[safe: 2] {
                     aclNames.insert(String(aclName))
                     if aclNames.count > 1 {
-                        self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "ACL has inconsistent names: \(aclNames) found")
+                        self.aclErrors.append(aclError)
+                        //self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
                     }
                 }
                 continue lineLoop
@@ -931,7 +1016,9 @@ public class AccessList {
                 if let aclName = words[safe: 2] {
                     aclNames.insert(String(aclName))
                     if aclNames.count > 1 {
-                        self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "ACL has inconsistent names: \(aclNames) found")
+                        self.aclErrors.append(aclError)
+                        //self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
                     }
                 }
                 continue lineLoop
@@ -940,8 +1027,10 @@ public class AccessList {
             if words[safe: 0] == "statistics" && words[safe: 1] == "per-entry" {
             //if line.starts(with: "statistics per-entry") {
                 guard deviceType == .nxos else {
-                    delegate?.report(severity: .linetext, message: "\(line)", line: linenum, delegateWindow: delegateWindow)
-                    delegate?.report(severity: .warning, message: "statistics per entry not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "statistics per entry not supported for device type \(deviceType)")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .linetext, message: "\(line)", line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .warning, message: "statistics per entry not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
                     continue lineLoop
                 }
                 continue lineLoop
@@ -949,12 +1038,16 @@ public class AccessList {
             if words[safe: 0] == "fragments" && (words[safe: 1] == "permit-all" || words[safe: 1] == "deny-all") {
             //if line.starts(with: "fragments permit-all") || line.starts(with: "fragments deny-all") {
                 guard deviceType == .nxos else {
-                    delegate?.report(severity: .linetext, message: "\(line)", line: linenum, delegateWindow: delegateWindow)
-                    delegate?.report(severity: .warning, message: "statistics per entry not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "statistics per entry not supported for device type \(deviceType)")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .linetext, message: "\(line)", line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .warning, message: "statistics per entry not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
                     continue lineLoop
                 }
-                delegate?.report(severity: .linetext, message: "\(line)", line: linenum, delegateWindow: delegateWindow)
-                delegate?.report(severity: .warning, message: "Fragments line not considered in ACL analysis", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Fragments line not considered in ACL analysis")
+                self.aclErrors.append(aclError)
+                //delegate?.report(severity: .linetext, message: "\(line)", line: linenum, delegateWindow: delegateWindow)
+                //delegate?.report(severity: .warning, message: "Fragments line not considered in ACL analysis", line: linenum, delegateWindow: delegateWindow)
                 continue lineLoop
             }
 
@@ -963,16 +1056,20 @@ public class AccessList {
                 if configurationMode == .objectGroupNetwork || configurationMode == .objectGroupService || configurationMode == .objectGroupProtocol {
                     continue lineLoop
                 } else {
-                    delegate?.report(severity: .linetext, message: "\(line)", line: linenum, delegateWindow: delegateWindow)
-                    delegate?.report(severity: .warning, message: "Unexpected description", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .warning, message: "Unexpected description")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .linetext, message: "\(line)", line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .warning, message: "Unexpected description", line: linenum, delegateWindow: delegateWindow)
                     continue lineLoop
                 }
             }
             if words[safe: 0] == "port-object" {
             //if line.starts(with: "port-object") {
                 guard deviceType == .asa else {
-                    delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                    delegate?.report(severity: .error, message: "object-group not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
+                    let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "object-group not supported for device type \(deviceType)")
+                    self.aclErrors.append(aclError)
+                    //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                    //delegate?.report(severity: .error, message: "object-group not supported for device type \(deviceType)", line: linenum, delegateWindow: delegateWindow)
                     continue lineLoop
                 }
                 let words = line.split{ $0.isWhitespace }.map{ String($0)}
@@ -1004,19 +1101,23 @@ public class AccessList {
             //debugPrint("starting timer")
             let timer = Timer(timeInterval: 1.0, repeats: false) { timer in
                 //debugPrint("timer fired")
-                self.delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                self.delegate?.report(severity: .error, message: "line took more than 1 second to parse, please email this line to feedback@networkmom.net", line: linenum, delegateWindow: delegateWindow)
+                let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "line took more than 1 second to parse, please email this line to feedback@networkmom.net")
+                self.aclErrors.append(aclError)
+                //self.delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                //self.delegate?.report(severity: .error, message: "line took more than 1 second to parse, please email this line to feedback@networkmom.net", line: linenum, delegateWindow: delegateWindow)
             }
             RunLoop.main.add(timer, forMode: .common)
             
-            if let accessControlEntry = AccessControlEntry(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: self, errorDelegate: delegate, delegateWindow: delegateWindow) {
+            if let accessControlEntry = AccessControlEntry(line: line, deviceType: deviceType, linenum: linenum, aclDelegate: self) {
                 objectName = nil
                 configurationMode = .accessControlEntry
                 accessControlEntries.append(accessControlEntry)
                 if let thisSequence = accessControlEntry.sequence {
                     if thisSequence <= lastSequenceSeen {
-                        delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
-                        delegate?.report(severity: .error, message: "Sequence number not increasing.  ACL analysis will not be accurate!", line: linenum, delegateWindow: delegateWindow)
+                        let aclError = AclError(linenum: linenum, line: line, severity: .error, message: "Sequence number not increasing.  ACL analysis will not be accurate!")
+                        self.aclErrors.append(aclError)
+                            //delegate?.report(severity: .linetext, message: line, line: linenum, delegateWindow: delegateWindow)
+                            //delegate?.report(severity: .error, message: "Sequence number not increasing.  ACL analysis will not be accurate!", line: linenum, delegateWindow: delegateWindow)
                     }
                     lastSequenceSeen = thisSequence
                 }
@@ -1086,6 +1187,11 @@ public class AccessList {
     }*/
 }
 extension AccessList: AclDelegate {
+    
+    func report(aclError: AclError) {
+        self.aclErrors.append(aclError)
+    }
+
     func getHostname(_ hostname: String) -> UInt128? {
         return self.hostnames[hostname]
     }
@@ -1112,10 +1218,13 @@ extension AccessList: AclDelegate {
         }
     }
 
-    func foundName(_ name: String, delegateWindow: DelegateWindow? = nil) {
+    //func foundName(_ name: String, delegateWindow: DelegateWindow? = nil) {
+    func foundName(_ name: String) {
         aclNames.insert(name)
         if aclNames.count > 1 {
-            self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
+            let aclError = AclError(linenum: 0, line: "", severity: .error, message: "ACL has inconsistent names: \(aclNames) found")
+            self.aclErrors.append(aclError)
+            //self.delegate?.report(severity: .error, message: "ACL has inconsistent names: \(aclNames) found", delegateWindow: delegateWindow)
         }
     }
 }

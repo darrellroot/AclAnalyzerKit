@@ -25,7 +25,7 @@ class TestIosXRV6: XCTestCase {
         permit 2001:0db8:85a3::/48
         permit tcp 2001:0db9:85a3::/48 2001:0db8:be03:2112::/64
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6)
         XCTAssert(acl.accessControlEntries.count == 2)
         
         do {
@@ -56,7 +56,7 @@ class TestIosXRV6: XCTestCase {
         ipv6 access-list scaled_acl2
         10 permit ipv6 net-group netobject2 any
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         
         do {
@@ -79,7 +79,7 @@ class TestIosXRV6: XCTestCase {
         ipv6 access-list scaled_acl2
         10 permit ipv6 net-group netobj1 any
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         
         do {
@@ -105,7 +105,7 @@ class TestIosXRV6: XCTestCase {
         10 permit ipv6 host 100:1:1:2:3::1 host 10:11:12::2
         40 permit ipv6 host 100:1:1:2:3::1 host 10:11:12::3
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6)
         XCTAssert(acl.accessControlEntries.count == 2)
         
         do {
@@ -135,7 +135,7 @@ class TestIosXRV6: XCTestCase {
         10 permit ipv6 1111:6666::2/128 1111:7777::2/128
         30 permit tcp host 1111:4444::2 eq 100 host 1111:5555::2 eq 10
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6)
         XCTAssert(acl.accessControlEntries.count == 2)
         
         do {
@@ -179,7 +179,7 @@ class TestIosXRV6: XCTestCase {
         39 remark Permit BGP traffic from a given host
         40 permit tcp host 6666:1:2:3::10 eq bgp host 7777:1:2:3::20 range 1300 1400
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6)
         XCTAssert(acl.accessControlEntries.count == 4)
         
         do {
@@ -226,7 +226,7 @@ class TestIosXRV6: XCTestCase {
         ipv6 access-list scaled_acl2
         10 permit ipv6 net-group netobj1 any
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         
         do {
@@ -255,7 +255,7 @@ class TestIosXRV6: XCTestCase {
         ipv6 access-list aclv6
         10 permit tcp any any
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         
         do {
@@ -274,7 +274,7 @@ class TestIosXRV6: XCTestCase {
         ipv6 access-list aclv6
         10 permit tcp any any established
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         
         do {
@@ -293,7 +293,7 @@ class TestIosXRV6: XCTestCase {
         ipv6 access-list aclv6
         1 permit 17 efb6:e60d:7f7c:e8e2:497a:b2e6:1c00:0000/102 neq 26594 8fb7:837a:4690:a946:be32:288d:8000:0000/97 eq 15741
         """
-        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6, delegate: nil, delegateWindow: nil)
+        let acl = AccessList(sourceText: sample, deviceType: .iosxrv6)
         XCTAssert(acl.accessControlEntries.count == 1)
         
         do {
