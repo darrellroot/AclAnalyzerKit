@@ -30,6 +30,14 @@ public class AccessList {
         return accessControlEntries.count
     }
     
+    public var errors: String {
+        var result = ""
+        for aclError in aclErrors {
+            result += aclError.description
+        }
+        return result
+    }
+    
     enum ConfigurationMode {
         case objectGroupNetwork
         case objectGroupService
