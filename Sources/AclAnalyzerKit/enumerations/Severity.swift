@@ -11,10 +11,6 @@ import Foundation
 enum Severity: String, CustomStringConvertible {
     case error
     case warning
-    case notification
-    //case linetext
-    case result
-    case blank
     
     var description: String {
         switch self {
@@ -23,14 +19,6 @@ enum Severity: String, CustomStringConvertible {
             return "ERROR"
         case .warning:
             return "WARNING"
-        case .notification:
-            return "NOTIFICATION"
-        //case .linetext:
-        //    return "LINETEXT"
-        case .result:
-            return "RESULT"
-        case .blank:
-            return ""
         }
     }
 }

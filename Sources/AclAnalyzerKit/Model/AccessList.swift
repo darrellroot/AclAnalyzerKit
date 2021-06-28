@@ -32,8 +32,26 @@ public class AccessList {
     
     public var errors: String {
         var result = ""
+        var warnings = 0
+        var errors = 0
+        for aclError in aclErrors {
+            switch aclError.severity {
+            
+            case .error:
+                errors += 1
+            case .warning:
+                warnings += 1
+            }
+        }
+        result += "Validated ACL: \(errors) errors, \(warnings) warnings\n"
+        if (errors > 0) {
+            result += "ALERT: ERRORS ARE NOT INCLUDED IN PERMIT/DENY ANALYSIS\n"
+        }
+        result += "\n";
+        
         for aclError in aclErrors {
             result += aclError.description
+            result += "\n"
         }
         return result
     }
